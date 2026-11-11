@@ -5,7 +5,7 @@
 `dev_ing_website` is **Callum Ingley's** personal developer website, portfolio, and engineering blog (`dev_ing`), built as a **multi-page application (MPA)** in **Gleam**.
 
 ### Lineage & Reference
-- **Legacy SPA URL:** [https://kazlim-code.github.io/dev-ing](https://kazlim-code.github.io/dev-ing)
+- **Legacy SPA URL:** [https://kazlim-code.github.io/dev_ing](https://kazlim-code.github.io/dev_ing) (`https://kazlim-code.github.io/dev-ing`)
 - **Legacy SPA Repository:** [https://github.com/kazlim-code/dev-ing](https://github.com/kazlim-code/dev-ing)
 - The previous iteration (`dev-ing`) was a single-page application (SPA) built with Gleam (`v1.13.0`), Lustre (`v5.4.0`), and `modem`.
 - This project evolves `dev_ing` into a server-rendered **multi-page architecture (MPA)** using **Gleam** (`v1.18.1`), **Wisp** (`v2.2.2`), **Mist** (`v6.0.3`), and **Lustre** (`v5.7.1`), keeping the signature **black and orange** (`orange-500` primary / `zinc-950` dark surface) palette while redesigning the layout.

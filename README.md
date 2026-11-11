@@ -4,7 +4,7 @@
 
 ## Background & Prior Version
 
-- **Previous Version (SPA):** [https://kazlim-code.github.io/dev-ing](https://kazlim-code.github.io/dev-ing) ([github.com/kazlim-code/dev-ing](https://github.com/kazlim-code/dev-ing))
+- **Previous Version (SPA):** [https://kazlim-code.github.io/dev_ing](https://kazlim-code.github.io/dev_ing) ([github.com/kazlim-code/dev-ing](https://github.com/kazlim-code/dev-ing))
   - Originally built as a single-page application (SPA) using **Gleam**, **Lustre**, `modem`, and Tailwind CSS v4 (`orange-500` primary / `zinc-950` dark surface).
 - **Current Version (MPA):** Evolves `dev_ing` into a server-rendered **multi-page application** powered by **Wisp** (`wisp`) and **Lustre** (`lustre/element` & `lustre/attribute`), preserving the black and orange palette while introducing a redesigned layout and strict TDD with **Birdie** snapshot testing.
 
