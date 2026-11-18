@@ -9,23 +9,24 @@ This roadmap tracks upcoming features, queued bug fixes, and AI architectural su
 ### Version 1.0 — Core Multi-Page Foundation & Static Export (Active Target)
 - [ ] **F1.1 — Wisp + Lustre SSR Core Pipeline (`context`, `router`, `layout`)**:
   - Idiomatic Wisp middleware pipeline, typed `Route` parser (`/`, `/projects`, `/blog`, `/blog/:slug`, `/resume`, `/prototypes`), and shared HTML5 document shell.
-- [ ] **F1.2 — Minimal Black & Orange Bento Grid Theme System (`components/bento`)**:
-  - Clean, minimal Bento grid and card primitives using `#09090b` (`zinc-950`) canvas, `#18181b` (`zinc-900`) cards, `#f97316` (`orange-500`) primary accents, and `JetBrains Mono` metadata.
+- [ ] **F1.2 — Generic, Theme-Parameterized UI Component Architecture (`theme`, `components/`)**:
+  - Architect reusable, generic UI components (`bento`, `card`, `badge`, `nav`, `section`) that accept explicit typed theming options and visual variants (`Theme`, `CardTone`, `BentoSpan`, `Variant`) so components are decoupled from page data, easy to compose, and individually covered by unit & Birdie snapshot tests.
+  - Ship v1 with a clean, minimal **Black & Orange Bento Grid** default theme (`#09090b` `zinc-950` canvas, `#18181b` `zinc-900` cards, `#f97316` `orange-500` primary accents, and `JetBrains Mono` metadata).
 - [ ] **F1.3 — Typed Content Modules & Living Resume (`data/project`, `data/blog`, `data/resume`)**:
-  - Pure Gleam data modules for Personal & Work projects (`Dev.Ing`, `Glelements`, `Wyrd Technology`, `Grafa`), blog posts (`what-is-dev-ing`, `what-is-jj`), and a dedicated **Living Resume** page (`/resume` with `/about` alias).
+  - Pure Gleam data modules for Personal & Work projects (`Dev.Ing`, `Wyrd Technology`, `Grafa`, plus `Glelements` documented as an early Lustre UI POC), blog posts (`what-is-dev-ing`, `what-is-jj`), and a dedicated **Living Resume** page (`/resume` with `/about` alias).
 - [ ] **F1.4 — Hybrid GitHub Pages Static Multi-Page Exporter (`export`)**:
   - CLI command (`gleam run -m dev_ing_website/export`) that renders all routes to static HTML files (`dist/index.html`, `dist/projects/index.html`, `dist/blog/index.html`, `dist/blog/<slug>/index.html`, `dist/resume/index.html`, `dist/404.html`) and copies `priv/static/` assets for zero-cost GitHub Pages deployment.
 - [ ] **F1.5 — Feature Gating & Dark-Launch Config (`Context.features`)**:
   - Typed feature flags in `Context` (e.g., `enable_prototypes_route`, `enable_unpublished_posts`) defaulting to `False` in production static exports.
 
-### Version 2.0 — Visual Polish, Live BEAM Hosting & Dynamic Capabilities (Upcoming)
-- [ ] **F2.1 — Richer Visual Polish & `glelements` Design System Integration**:
-  - Evolve the basic v1 Black & Orange Bento Grid with bespoke card treatments, view transitions, refined typography hierarchy, and direct integration with [`kazlim-code/glelements`](https://github.com/kazlim-code/glelements).
-  - Explore hybrid layout accents from `/prototypes` (Terminal CLI breadcrumbs, Editorial Split article reader, Industrial Spec telemetry).
+### Version 2.0 — Design System Prototyping, Fun Interactive Resume & Live BEAM Hosting (Upcoming)
+- [ ] **F2.1 — Fun & Cool Design System Prototyping (Fleshing Out the Look & Feel)**:
+  - Discuss, prototype, and compare expressive, standout design systems and theme variations using the v1 theme-parameterized component architecture and `/prototypes` switcher (moving away from the standalone `glelements` POC library in favor of in-repo, AI-accelerated, testable themeable components).
+  - Explore bespoke card treatments, view transitions, refined typography hierarchy, and hybrid layout accents (Terminal CLI, Editorial Split, Industrial Spec, and new playful themes).
 - [ ] **F2.2 — Dedicated Live BEAM Hosting (Wisp + Mist Server Deployment)**:
   - Deploy the live Wisp + Mist HTTP server to a BEAM-friendly host (Fly.io, Railway, or VPS) with zero view rewrites.
-- [ ] **F2.3 — Interactive Living Resume & Deep-Dive Case Studies**:
-  - Add interactive technology/skill filtering on `/resume`, print/PDF-ready resume stylesheet, and full engineering case studies for Wyrd Technology, Grafa, and Glelements.
+- [ ] **F2.3 — Standout, Fun & Highly Interactive Living Resume (`/resume`)**:
+  - Interactivity is **KEY** on `/resume`: make the page stand out as crystal-clear, functional, and genuinely fun to explore (interactive technology/skill filtering, playful interactive timeline/role inspection, print/PDF-ready mode, and rich engineering case studies for Wyrd Technology and Grafa).
 - [ ] **F2.4 — Dynamic Blog CMS, Search & OTP Actor Telemetry**:
   - Add dynamic blog post management, tag/search filtering, and optional SQLite/PostgreSQL persistence + OTP actor services once hosted on a live BEAM server.
 
@@ -42,8 +43,8 @@ This roadmap tracks upcoming features, queued bug fixes, and AI architectural su
 
 ## 3. AI Suggestions & Deferred Efficiency Triggers
 
-- **S3.1 — Extract Bento Primitives to `glelements` (Trigger: `>= 5` reusable UI components in `src/dev_ing_website/components/`)**:
-  - Keep `bento.gleam` self-contained in v1; once 5+ components stabilize in v2.1, extract them into `kazlim-code/glelements`.
+- **S3.1 — Theme-Parameterized Generic Component Testing Matrix (Trigger: Every new component in `src/dev_ing_website/components/`)**:
+  - Rather than maintaining an external `glelements` package, keep generic UI components in `src/dev_ing_website/components/` parameterized by a `Theme` / `Variant` record so feeding in new theming options in v2 can be snapshot-tested across variants in isolation.
 - **S3.2 — Retire Static Export Flag When Live BEAM Host Is Active (Trigger: Completion of F2.2)**:
   - Once `dev_ing_website` runs on a live BEAM host in v2.2, transition GitHub Pages to a redirect or retire `export.gleam`.
 - **S3.3 — Retire `feature.prototypes_route.enabled` Gate (Trigger: After v2.1 visual design sign-off)**:

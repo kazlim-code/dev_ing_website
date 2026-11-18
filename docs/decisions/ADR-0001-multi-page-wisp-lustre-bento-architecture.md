@@ -26,8 +26,9 @@ The legacy `dev_ing` website ([kazlim-code/dev-ing](https://github.com/kazlim-co
 - **Lustre SSR & Birdie Formatting**: `lustre/element.to_document_string(el)` renders full HTML5 documents (`<!doctype html>\n...`), while `element.to_readable_string(el)` formats multi-line HTML ideal for `birdie.snap(content:, title:)`.
 - **Direct `simplifile` Dependency**: Added `simplifile >= 2.7.0` directly to `gleam.toml` so `export.gleam` can write `dist/` trees and copy `priv/static/` assets cleanly.
 
-### Slice C — Theme Tokens, Conventions & Feature Flags
-- **Black & Orange Palette**: `priv/static/glelements.css` maps `--color-primary` to `orange-500` (`#f97316`) and `--color-surface-900`/`950` to `zinc-900` (`#18181b`) / `zinc-950` (`#09090b`), paired with `JetBrainsMono-Regular.woff2`.
+### Slice C — Theme Tokens, Generic Component Architecture & Feature Flags
+- **Theme-Parameterized Generic Components (`theme.gleam` + `components/`)**: Rather than relying on the early external `glelements` POC repository, UI primitives (`bento.gleam`, cards, badges, section headers) must be architected in-repo as generic, reusable functions that accept explicit typed theme and variant options (`Theme`, `CardTone`, `BentoSpan`, `BadgeVariant`). This guarantees every component can be unit- and Birdie-snapshot tested in isolation and makes prototyping fun, expressive design systems in v2 (`F2.1`) and a standout interactive Living Resume (`F2.3`) seamless.
+- **Black & Orange Default Palette**: `priv/static/glelements.css` maps `--color-primary` to `orange-500` (`#f97316`) and `--color-surface-900`/`950` to `zinc-900` (`#18181b`) / `zinc-950` (`#09090b`), paired with `JetBrainsMono-Regular.woff2`.
 - **Feature Flags in `Context`**: `FeatureFlags(enable_prototypes_route: Bool, enable_unpublished_posts: Bool, enable_resume_filters: Bool)` defaults to `False` in production static exports (`prod_defaults()`) and `True` in local development (`dev_defaults()`).
 
 ---

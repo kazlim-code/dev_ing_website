@@ -28,9 +28,9 @@
    - **Snapshot Testing (`birdie`):** Use [Birdie](https://hexdocs.pm/birdie/) (`birdie.snap(content:, title:)`) to snapshot rendered Lustre HTML views (`element.to_readable_string` / `element.to_document_string`) and multi-page responses so layout or markup regressions are caught explicitly.
    - Run `gleam test` continuously during red-green-refactor cycles, and review snapshots via `gleam run -m birdie`.
 
-4. **Design & Theme (Black & Orange):**
-   - Preserve the signature **black and orange** theme (`--color-primary: orange-500` `#f97316` / `#ff6b00` on deep carbon/zinc surfaces `zinc-900` / `zinc-950` `#09090b`, with `JetBrains Mono` accents).
-   - Keep visual components modular so multiple layout directions can be prototyped and compared quickly.
+4. **Design, Theming & Reusable Component Architecture (Black & Orange):**
+   - Preserve the signature **black and orange** default theme (`--color-primary: orange-500` `#f97316` / `#ff6b00` on deep carbon/zinc surfaces `zinc-900` / `zinc-950` `#09090b`, with `JetBrains Mono` accents).
+   - **Critical Component Rule:** Structure all UI components (`src/dev_ing_website/components/`) and theme definitions (`src/dev_ing_website/theme.gleam`) as generic, reusable, theme-parameterized primitives (accepting explicit theme options/variants rather than hardcoding page-specific markup) so components can be easily reused, unit/snapshot-tested in isolation, and fed new design-system variations in v2 (replacing the standalone `glelements` POC).
 
 5. **Multi-Page Navigation (MPA) & Content Structure:**
    - Semantic multi-page routes:

@@ -26,16 +26,16 @@
 
 ## Roadmap
 
-### Version 1 (Current Target — Structure, Theme System & Static Export)
+### Version 1 (Current Target — Structure, Themeable Components & Static Export)
 - [ ] Ground-up multi-page architecture in Gleam (`v1.18.1`), Wisp (`v2.2.2`), and Lustre (`v5.7.1`).
-- [ ] Clean, minimal **Black & Orange Bento Grid** theming system (`zinc-950` / `zinc-900` surfaces + `orange-500` accents).
-- [ ] Core routes (`/`, `/projects`, `/blog`, `/blog/:slug`, `/resume` Living Resume) tested with `wisp/testing` and `birdie` snapshots.
+- [ ] Generic, reusable, **theme-parameterized UI component architecture** (`src/dev_ing_website/theme.gleam` & `src/dev_ing_website/components/`) shipped with a clean, minimal **Black & Orange Bento Grid** default theme and isolated component tests.
+- [ ] Core routes (`/`, `/projects`, `/blog`, `/blog/:slug`, `/resume` Living Resume) tested with `wisp/simulate` and `birdie` snapshots.
 - [ ] Static multi-page HTML exporter (`gleam run -m dev_ing_website/export`) for zero-cost **GitHub Pages** hosting alongside local Wisp server support.
 
-### Version 2 (Upcoming Work — Visual Craft, Live Hosting & Dynamic Features)
-- [ ] **v2.1 — Visual Polish & `glelements` Integration**: Expand the basic Bento Grid with richer visual details, view transitions, typography refinements, and reusable components from [`kazlim-code/glelements`](https://github.com/kazlim-code/glelements).
+### Version 2 (Upcoming Work — Fun Design Systems, Interactive Resume & Live Hosting)
+- [ ] **v2.1 — Fun & Cool Design System Prototyping**: Prototype and compare expressive visual design systems to flesh out the look of the site, leveraging the v1 theme-parameterized component architecture (superseding the early `glelements` POC).
 - [ ] **v2.2 — Live Hosted BEAM Server**: Migrate from static GitHub Pages export to a hosted Wisp + Mist server deployment (e.g., Fly.io, Railway, or VPS) with zero view rewrites.
-- [ ] **v2.3 — Interactive Living Resume & Deep-Dive Case Studies**: Add stack/skill filtering on `/resume`, print/PDF export styling, and detailed engineering case studies.
+- [ ] **v2.3 — Standout, Fun & Interactive Living Resume (`/resume`)**: Make interactivity central on `/resume`—clear, functional, and genuinely fun to explore (interactive skill/stack filtering, interactive timeline/case-study views, and print/PDF mode).
 - [ ] **v2.4 — Dynamic Blog CMS & OTP Features**: Introduce dynamic content management, tag/search filtering, and optional database persistence or OTP actor services on the live BEAM server.
 
 ## Development, Testing & Version Control (`jj`)
