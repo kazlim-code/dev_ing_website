@@ -99,13 +99,51 @@ sequenceDiagram
 
 ---
 
-## 4. Phase 2 Candidate Architectures for Static Export & Routing
+## 4. Phase 2 Empirical Prototype Spike Comparison
 
-Two candidate architectures are being prototyped in isolated `workspace: "share"` worktrees:
+Two isolated Jujutsu worktrees (`scratch/spike_a` and `scratch/spike_b`) prototyped the full core slice (`context`, `bento`, `layout`, `router`, `export`, and `dev_ing_website_test`) and executed `gleam test`:
 
-1. **Candidate A — Shared Pure Renderer (`render_route`)**:
-   - `router.gleam` exposes `render_route(ctx: Context, route: Route) -> #(Int, Element(Nil))` (or `#(Int, String)`).
-   - `handle_request` wraps `render_route` in Wisp middleware (`serve_static`, `log_request`, `rescue_crashes`) and `wisp.html_response`.
-   - `export.gleam` enumerates typed `Route` values and calls `render_route` directly without importing test-only `wisp/simulate` in `src/`.
-2. **Candidate B — Wisp HTTP Loopback Exporter (`wisp/simulate`)**:
-   - `export.gleam` synthesizes HTTP GET requests via `wisp/simulate.request(http.Get, path) |> router.handle_request(ctx)` and extracts `simulate.read_body(response)`.
+### Side-by-Side Spike Metrics
+
+| Metric / Dimension | Candidate A: Shared Pure Renderer (`render_route`) | Candidate B: Wisp Loopback Exporter (`wisp/simulate`) |
+| :--- | :--- | :--- |
+| **Total Lines of Code (`loc_changed`)** | **`678` LOC** (`~16%` more compact) | `804` LOC |
+| **`router.gleam` + `export.gleam` LOC** | **`329` LOC** (`256` + `73`) | `426` LOC (`327` + `99`) |
+| **Files Touched (`files_touched`)** | `6` files | `6` files |
+| **Tests Passed (`gleam test`)** | **`4 / 4` passed** | `3 / 3` passed |
+| **`wisp/simulate` in Production `src/`** | **None (`0` test imports in `src/`)** | Imported in `src/dev_ing_website/export.gleam` |
+| **Type Safety of Export Targets** | **Compile-time typed `List(#(Route, String))`** | Runtime string URLs + manual `expected_status` checks |
+| **Middleware Side Effects During Export** | **Zero** (`wisp.log_request` / `rescue_crashes` skipped cleanly) | Triggers HTTP request logging & masks crashes as 500 responses unless manually guarded |
+
+### Quantitative Spike Comparison (`xychart-beta`)
+
+```mermaid
+xychart-beta
+  title "Phase 2 Spike Metrics: Candidate A (Pure Renderer) vs Candidate B (Wisp Loopback)"
+  x-axis ["Total LOC", "Router + Export LOC", "Prod Test-Module Imports (x100)", "Friction Points (x100)"]
+  y-axis "Score (Lower is Better)" 0 --> 900
+  bar [678, 329, 0, 200]
+  bar [804, 426, 100, 400]
+```
+
+### Architecture Comparison Diagram
+
+```mermaid
+flowchart LR
+  subgraph CandA["Candidate A: Shared Pure Renderer (Recommended)"]
+    direction TB
+    ReqA["Wisp HTTP Request"] --> ParseA["parse_route(segments, ctx) -> Route"]
+    ExpA["export.gleam<br/>Typed List(Route)"] --> RenderA["render_route(ctx, route)<br/>-> #(Int, String)"]
+    ParseA --> RenderA
+    RenderA --> RespA["wisp.html_response(html, status)"]
+    RenderA --> DistA["simplifile.write(dist/.../index.html)"]
+  end
+
+  subgraph CandB["Candidate B: Wisp HTTP Loopback Exporter"]
+    direction TB
+    ExpB["export.gleam<br/>String URLs"] --> SimB["wisp/simulate.request(Get, url)"]
+    SimB --> HandleB["router.handle_request(req, ctx)<br/>(Runs Middleware + Views)"]
+    HandleB --> ReadB["simulate.read_body(res)<br/>+ manual status check"]
+    ReadB --> DistB["simplifile.write(dist/.../index.html)"]
+  end
+```

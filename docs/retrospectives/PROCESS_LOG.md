@@ -21,3 +21,11 @@ Tracks mid-workflow user corrections, friction points, and process improvements 
 4. **[2026-11-18] Wisp v2 API Change (`wisp/testing` -> `wisp/simulate`)**:
    - **Observation**: Phase 1 repo slicing (`Slice B` & `Slice C`) discovered that `wisp v2.2.2` replaced the v1 `wisp/testing` module with `wisp/simulate` (`simulate.request`, `simulate.read_body`).
    - **Process Improvement**: Always slice installed package sources in `build/packages/<pkg>/src/` during Phase 1 before writing test specifications so deprecated v1 module names never enter test plans.
+
+5. **[2026-11-18] Isolated Subagent Worktrees in `JJ_Git` Repositories (`jj workspace add`)**:
+   - **Observation**: Calling `invoke_subagent` with `Workspace: "share"` fails in Git-colocated Jujutsu repositories (`share workspace not supported for VCS type JJ_Git`).
+   - **Process Improvement**: In `JJ_Git` repos, create isolated shared Jujutsu worktrees in `<appDataDir>/brain/<conversation-id>/scratch/spike_<name>` using `jj workspace add <path> --name spike_<name>`, run the parallel subagent spikes inside those directories, and clean them up afterwards with `jj workspace forget spike_<name>` and `rm -rf`.
+
+6. **[2026-11-19] Render Phase 2 Spike Metrics in Chat Before Calling `ask_question`**:
+   - **Observation**: Calling `ask_question` in the same tool batch immediately after receiving subagent spike results displays the question modal *before* the assistant's markdown text response renders, so the user sees the question without the spike metrics, charts, or snippets.
+   - **Process Improvement**: Either present the full Phase 2 spike comparison (table, `xychart-beta`, architecture diagram, and code snippets) in the chat response first (or embed the summary directly in the prompt/artifact) before prompting for the decision gate.
