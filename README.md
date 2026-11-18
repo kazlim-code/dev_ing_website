@@ -18,11 +18,25 @@
 
 ## Multi-Page Routes & Content
 
-- `/` — **Home**: Hero overview, What's New, Featured Personal Projects (`Dev.Ing`, `Glelements`), and Latest Blog Posts
+- `/` — **Home**: Clean Black & Orange Bento Grid showcase of work, projects, and latest learnings
 - `/projects` — **Projects & Work**: Personal projects (`Dev.Ing`, `Glelements`) and professional work (`Wyrd Technology`, `Grafa`)
-- `/blog` & `/blog/:slug` — **Blog**: Technical articles including *What is Dev_Ing* and *Experimenting with VCS other than Git (Jujutsu)*
-- `/about` — **About**: Callum Ingley's background, frameworks & tooling, career history, and hobbies
-- `/prototypes` — **Design Prototypes**: Live multi-page layout comparison in the black & orange theme
+- `/blog` & `/blog/:slug` — **Blog**: Technical articles & learning journal (*What is Dev_Ing*, *Experimenting with VCS other than Git (Jujutsu)*)
+- `/resume` — **Living Resume**: Dedicated living engineering resume covering Callum Ingley's career history, frameworks, tooling, and featured work
+- `/prototypes` — **Design Prototypes**: Multi-page layout experimentation in the black & orange theme
+
+## Roadmap
+
+### Version 1 (Current Target — Structure, Theme System & Static Export)
+- [ ] Ground-up multi-page architecture in Gleam (`v1.18.1`), Wisp (`v2.2.2`), and Lustre (`v5.7.1`).
+- [ ] Clean, minimal **Black & Orange Bento Grid** theming system (`zinc-950` / `zinc-900` surfaces + `orange-500` accents).
+- [ ] Core routes (`/`, `/projects`, `/blog`, `/blog/:slug`, `/resume` Living Resume) tested with `wisp/testing` and `birdie` snapshots.
+- [ ] Static multi-page HTML exporter (`gleam run -m dev_ing_website/export`) for zero-cost **GitHub Pages** hosting alongside local Wisp server support.
+
+### Version 2 (Upcoming Work — Visual Craft, Live Hosting & Dynamic Features)
+- [ ] **v2.1 — Visual Polish & `glelements` Integration**: Expand the basic Bento Grid with richer visual details, view transitions, typography refinements, and reusable components from [`kazlim-code/glelements`](https://github.com/kazlim-code/glelements).
+- [ ] **v2.2 — Live Hosted BEAM Server**: Migrate from static GitHub Pages export to a hosted Wisp + Mist server deployment (e.g., Fly.io, Railway, or VPS) with zero view rewrites.
+- [ ] **v2.3 — Interactive Living Resume & Deep-Dive Case Studies**: Add stack/skill filtering on `/resume`, print/PDF export styling, and detailed engineering case studies.
+- [ ] **v2.4 — Dynamic Blog CMS & OTP Features**: Introduce dynamic content management, tag/search filtering, and optional database persistence or OTP actor services on the live BEAM server.
 
 ## Development, Testing & Version Control (`jj`)
 

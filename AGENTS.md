@@ -24,8 +24,8 @@
 
 3. **Test-Driven Development (TDD) & Snapshot Testing (`birdie`):**
    - **Strict TDD Workflow:** Write or update failing unit/route/snapshot tests in `test/` *before* implementing new routes, components, or data transformations.
-   - **Unit & Route Assertions (`gleeunit`):** Test Wisp route handlers directly using `wisp/testing` (`testing.get`, status code checks, and header checks).
-   - **Snapshot Testing (`birdie`):** Use [Birdie](https://hexdocs.pm/birdie/) (`birdie.snap`) to snapshot rendered Lustre HTML views and multi-page responses so layout or markup regressions are caught explicitly.
+   - **Unit & Route Assertions (`gleeunit` + `wisp/simulate`):** Test Wisp route handlers directly using `wisp/simulate` (`simulate.request(http.Get, path)` and `simulate.read_body(response)` — note `wisp/simulate` replaced `wisp/testing` in Wisp v2).
+   - **Snapshot Testing (`birdie`):** Use [Birdie](https://hexdocs.pm/birdie/) (`birdie.snap(content:, title:)`) to snapshot rendered Lustre HTML views (`element.to_readable_string` / `element.to_document_string`) and multi-page responses so layout or markup regressions are caught explicitly.
    - Run `gleam test` continuously during red-green-refactor cycles, and review snapshots via `gleam run -m birdie`.
 
 4. **Design & Theme (Black & Orange):**
@@ -34,12 +34,13 @@
 
 5. **Multi-Page Navigation (MPA) & Content Structure:**
    - Semantic multi-page routes:
-     - `/` — Home (Hero, What's New, Featured Personal Projects: `Dev.Ing`, `Glelements`, Latest Blog Posts)
+     - `/` — Home (Clean Black & Orange Bento Grid showcase of work, Featured Personal Projects: `Dev.Ing`, `Glelements`, Latest Blog Posts)
      - `/projects` — Projects & Work Portfolio (`Dev.Ing`, `Glelements`, `Wyrd Technology`, `Grafa`)
-     - `/blog` & `/blog/:slug` — Engineering Blog (`what-is-dev-ing`, `what-is-jj`)
-     - `/about` — About Callum Ingley, skills/frameworks, career experience, and contact links
+     - `/blog` & `/blog/:slug` — Engineering Blog & Learning Journal (`what-is-dev-ing`, `what-is-jj`)
+     - `/resume` (and `/about` alias) — Living Resume covering Callum Ingley's career experience, skills/frameworks, and projects
      - `/prototypes` — Interactive design switcher for comparing multi-page layouts
-   - Share layout primitives (navigation header, footer, `<head>` metadata) across pages via `src/dev_ing_website/layout.gleam`.
+   - Share layout primitives (navigation header, footer, `<head>` metadata) across pages via `src/dev_ing_website/layout.gleam` and `src/dev_ing_website/components/bento.gleam`.
+   - Support both running Wisp dynamically (`gleam run`) and exporting static multi-page HTML (`dist/`) for GitHub Pages in v1, paving the way for live BEAM hosting, richer visual polish (`glelements`), and dynamic CMS features in v2.
 
 6. **Gleam Documentation & Code Style Standards:**
    - Document every module at the top of the file (before imports) using `////` comments, ending with a blank `////` line followed by an empty line.
