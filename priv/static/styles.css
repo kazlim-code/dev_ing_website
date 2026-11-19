@@ -191,6 +191,10 @@ a {
   grid-template-columns: repeat(1, minmax(0, 1fr));
 }
 
+.gap-1 {
+  gap: 0.25rem;
+}
+
 .gap-2 {
   gap: 0.5rem;
 }
@@ -523,7 +527,6 @@ a {
   text-underline-offset: 4px;
 }
 
-.bento-card .bg-orange-500 .bento-link,
 .bg-orange-500 .bento-link {
   color: var(--bg-canvas);
   text-decoration: underline;

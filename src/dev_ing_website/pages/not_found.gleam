@@ -17,9 +17,7 @@ pub fn view(ctx ctx: Context) -> Element(Nil) {
       theme: ctx.theme,
       eyebrow: "404 // NOT FOUND",
       title: "Page Not Found",
-      subtitle: Some(
-        "The route or draft article you requested is either missing or gated off.",
-      ),
+      subtitle: Some("The page you requested could not be found."),
     ),
     bento.grid(theme: ctx.theme, children: [
       bento.card(

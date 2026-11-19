@@ -5,6 +5,8 @@ import dev_ing_website/context
 import dev_ing_website/router
 import filepath
 import gleam/erlang/process
+import gleam/io
+import gleam/string
 import mist
 import simplifile
 import wisp
@@ -18,15 +20,25 @@ pub fn main() -> Nil {
   let static_directory = resolve_static_directory()
   let ctx = context.dev_context(static_directory:)
 
-  let assert Ok(_) =
+  case
     router.handle_request(_, ctx)
     |> wisp_mist.handler(secret_key_base)
     |> mist.new
     |> mist.port(8000)
     |> mist.start
-
-  process.sleep_forever()
+  {
+    Ok(_) -> process.sleep_forever()
+    Error(reason) -> {
+      io.println_error(
+        "Failed to start Mist server: " <> string.inspect(reason),
+      )
+      halt(1)
+    }
+  }
 }
+
+@external(erlang, "erlang", "halt")
+fn halt(status: Int) -> Nil
 
 fn resolve_static_directory() -> String {
   case wisp.priv_directory("dev_ing_website") {

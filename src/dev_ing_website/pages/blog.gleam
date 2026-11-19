@@ -138,7 +138,7 @@ pub fn post_view(ctx ctx: Context, post post: BlogPost) -> Element(Nil) {
           html.div(
             [attribute.class("article-prose mt-2")],
             list.map(post.paragraphs, fn(paragraph) {
-              html.p([attribute.class("text-zinc-200")], [
+              html.p([attribute.class(ctx.theme.text_primary_class)], [
                 element.text(paragraph),
               ])
             }),

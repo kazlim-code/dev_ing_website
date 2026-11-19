@@ -84,12 +84,13 @@ fn render_project_card(ctx: Context, item: Project) -> Element(Nil) {
     False -> element.none()
   }
 
-  bento.card(
+  bento.card_with_heading(
     theme: ctx.theme,
     span: SpanHalf,
     tone: card_tone,
     eyebrow: Some(eyebrow_label),
     title: item.title,
+    heading_level: 3,
     children: [
       html.div([attribute.class("project-header")], [
         html.img([

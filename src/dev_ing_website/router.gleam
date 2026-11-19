@@ -1,4 +1,4 @@
-//// Candidate A Wisp router and pure server-side route renderer.
+//// Wisp HTTP router and pure server-side route renderer.
 ////
 
 import dev_ing_website/context.{type Context}
@@ -191,32 +191,34 @@ pub fn handle_request(
   use <- wisp.log_request(req)
   use <- wisp.rescue_crashes
 
-  let static_prefix = context.href(ctx, "/static")
+  let resp = {
+    use <- wisp.require_method(req, http.Get)
+    let static_prefix = context.href(ctx, "/static")
 
-  let resp = case is_unsafe_static_request(req.path, static_prefix) {
-    True -> {
-      let #(status, html) = render_not_found(ctx)
-      wisp.html_response(html, status)
-    }
-    False -> {
-      use <- wisp.serve_static(
-        req,
-        under: static_prefix,
-        from: ctx.static_directory,
-      )
-      use <- wisp.require_method(req, http.Get)
-
-      let segments =
-        wisp.path_segments(req)
-        |> strip_base_path(ctx.base_path)
-
-      let route = case segments {
-        Ok(route_segments) -> parse_route(route_segments, ctx)
-        Error(Nil) -> NotFound
+    case is_unsafe_static_request(req.path, static_prefix) {
+      True -> {
+        let #(status, html) = render_not_found(ctx)
+        wisp.html_response(html, status)
       }
+      False -> {
+        use <- wisp.serve_static(
+          req,
+          under: static_prefix,
+          from: ctx.static_directory,
+        )
 
-      let #(status, html) = render_route(ctx, route)
-      wisp.html_response(html, status)
+        let segments =
+          wisp.path_segments(req)
+          |> strip_base_path(ctx.base_path)
+
+        let route = case segments {
+          Ok(route_segments) -> parse_route(route_segments, ctx)
+          Error(Nil) -> NotFound
+        }
+
+        let #(status, html) = render_route(ctx, route)
+        wisp.html_response(html, status)
+      }
     }
   }
 

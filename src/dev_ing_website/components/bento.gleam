@@ -21,7 +21,7 @@ pub fn grid(
 }
 
 /// Renders a generic Bento card parameterized by Theme, BentoSpan, CardTone,
-/// optional mono eyebrow label, title, and child elements.
+/// optional mono eyebrow label, title (`<h2>`), and child elements.
 ///
 pub fn card(
   theme theme: Theme,
@@ -29,6 +29,29 @@ pub fn card(
   tone tone: CardTone,
   eyebrow eyebrow: Option(String),
   title title: String,
+  children children: List(Element(msg)),
+) -> Element(msg) {
+  card_with_heading(
+    theme:,
+    span:,
+    tone:,
+    eyebrow:,
+    title:,
+    heading_level: 2,
+    children:,
+  )
+}
+
+/// Renders a generic Bento card with an explicit heading level (`2` or `3`)
+/// for nested sections where cards sit beneath a section `<h2>`.
+///
+pub fn card_with_heading(
+  theme theme: Theme,
+  span span: BentoSpan,
+  tone tone: CardTone,
+  eyebrow eyebrow: Option(String),
+  title title: String,
+  heading_level heading_level: Int,
   children children: List(Element(msg)),
 ) -> Element(msg) {
   let eyebrow_class = case tone {
@@ -46,14 +69,19 @@ pub fn card(
     None -> element.none()
   }
 
+  let title_attrs = [
+    attribute.class("bento-card-title text-xl font-bold tracking-tight"),
+  ]
+  let title_element = case heading_level {
+    3 -> html.h3(title_attrs, [element.text(title)])
+    _ -> html.h2(title_attrs, [element.text(title)])
+  }
+
   html.article(
     [attribute.class(theme.resolve_card_class(theme:, span:, tone:))],
     [
       eyebrow_element,
-      html.h2(
-        [attribute.class("bento-card-title text-xl font-bold tracking-tight")],
-        [element.text(title)],
-      ),
+      title_element,
       html.div(
         [attribute.class("bento-card-body flex flex-col gap-3")],
         children,

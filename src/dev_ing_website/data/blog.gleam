@@ -2,6 +2,7 @@
 ////
 
 import gleam/list
+import gleam/string
 
 /// Represents an engineering blog post or learning journal entry.
 ///
@@ -23,12 +24,16 @@ pub type BlogPost {
 pub fn list_posts(
   include_unpublished include_unpublished: Bool,
 ) -> List(BlogPost) {
-  case include_unpublished {
+  let posts = case include_unpublished {
     True -> all_posts()
     False ->
       all_posts()
       |> list.filter(fn(post) { post.published })
   }
+
+  list.sort(posts, fn(a, b) {
+    string.compare(b.published_date, a.published_date)
+  })
 }
 
 /// Finds a single blog post by slug, respecting the `include_unpublished` flag.

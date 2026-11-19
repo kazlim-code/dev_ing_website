@@ -5,8 +5,8 @@ import dev_ing_website/components/bento
 import dev_ing_website/context.{type Context}
 import dev_ing_website/data/resume.{type ResumeData, type SkillGroup}
 import dev_ing_website/theme.{
-  BadgeNeutral, BadgeOrangeOutline, CarbonDefault, OrangeAccent, SpanFull,
-  SpanThird, SpanTwoThirds,
+  type Theme, BadgeNeutral, BadgeOrangeOutline, CarbonDefault, OrangeAccent,
+  SpanFull, SpanThird, SpanTwoThirds,
 }
 import gleam/list
 import gleam/option.{Some}
@@ -20,7 +20,7 @@ import lustre/element/html
 pub fn view(ctx ctx: Context, data data: ResumeData) -> Element(Nil) {
   let filter_bar = case context.resume_filters_enabled(ctx) {
     False -> element.none()
-    True -> render_filter_bar(data.skill_groups)
+    True -> render_filter_bar(ctx.theme, data.skill_groups)
   }
 
   let github_link = case is_safe_http_url(data.github_url) {
@@ -163,7 +163,10 @@ pub fn view(ctx ctx: Context, data data: ResumeData) -> Element(Nil) {
   ])
 }
 
-fn render_filter_bar(skill_groups: List(SkillGroup)) -> Element(Nil) {
+fn render_filter_bar(
+  theme: Theme,
+  skill_groups: List(SkillGroup),
+) -> Element(Nil) {
   let category_buttons =
     list.map(skill_groups, fn(group) {
       html.button(
@@ -183,9 +186,14 @@ fn render_filter_bar(skill_groups: List(SkillGroup)) -> Element(Nil) {
       attribute.class("resume-filter-bar"),
     ],
     [
-      html.span([attribute.class("text-xs font-mono text-zinc-400")], [
-        element.text("Filter skills:"),
-      ]),
+      html.span(
+        [
+          attribute.class(
+            "text-xs " <> theme.font_mono_class <> " " <> theme.text_muted_class,
+          ),
+        ],
+        [element.text("Filter skills:")],
+      ),
       html.button(
         [
           attribute.type_("button"),

@@ -69,6 +69,7 @@ pub fn export_site(
 /// CLI entrypoint (`gleam run -m dev_ing_website/export`).
 ///
 pub fn main() -> Nil {
+  let _ = simplifile.delete("dist")
   let ctx = context.prod_context("priv/static", "/dev_ing")
   case export_site(ctx:, output_dir: "dist") {
     Ok(report) ->
@@ -78,15 +79,20 @@ pub fn main() -> Nil {
         <> " files to "
         <> report.output_dir,
       )
-    Error(FileWriteError(path, reason)) ->
+    Error(FileWriteError(path, reason)) -> {
       io.println_error(
         "Static export failed at "
         <> path
         <> ": "
         <> simplifile.describe_error(reason),
       )
+      halt(1)
+    }
   }
 }
+
+@external(erlang, "erlang", "halt")
+fn halt(status: Int) -> Nil
 
 fn validate_relative_path(rel_path: String) -> Result(Nil, ExportError) {
   let has_bad_segment =
