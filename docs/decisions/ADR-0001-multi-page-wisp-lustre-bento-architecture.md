@@ -1,7 +1,7 @@
 # ADR-0001: Multi-Page Wisp + Lustre Bento Architecture & Hybrid Static Exporter
 
-- **Status:** Draft (Phase 1 Discovery Complete — Entering Phase 2 Spikes)
-- **Date:** 2026-11-18
+- **Status:** Accepted — Candidate A (`render_route` Shared Pure View Renderer) Selected (Phase 3 Pre-Code Review Gate)
+- **Date:** 2026-11-19
 - **Author:** Callum Ingley & Antigravity (`architect-plan`)
 
 ---
@@ -170,7 +170,7 @@ flowchart LR
     RenderA --> DistA["simplifile.write(dist/.../index.html)"]
   end
 
-  subgraph CandB["Candidate B: Wisp HTTP Loopback Exporter"]
+  subgraph CandB["Candidate B: Wisp HTTP Loopback Exporter (Rejected)"]
     direction TB
     ExpB["export.gleam<br/>String URLs"] --> SimB["wisp/simulate.request(Get, url)"]
     SimB --> HandleB["router.handle_request(req, ctx)<br/>(Runs Middleware + Views)"]
@@ -178,3 +178,18 @@ flowchart LR
     ReadB --> DistB["simplifile.write(dist/.../index.html)"]
   end
 ```
+
+---
+
+## 5. Decision Outcome & Rationale
+
+We chose **Candidate A — Shared Pure View Renderer (`render_route`)** combined with a **Theme-Parameterized Generic Component Architecture (`theme.gleam` + `components/`)**:
+
+1. **Zero Test-Helper Coupling in Production `src/`**: `export.gleam` enumerates typed `Route` values and calls `router.render_route(ctx, route)` directly, keeping `wisp/simulate` strictly inside `test/`.
+2. **16% Smaller Codebase (`678` vs. `804` LOC) & Fail-Fast Static Builds**: Direct view rendering bypasses `wisp.log_request` console noise and `wisp.rescue_crashes` masking during static export.
+3. **Theme-Parameterized Generic Components (`theme.gleam` + `components/bento.gleam`)**: Every UI component accepts explicit typed `Theme` and variant arguments (`CardTone`, `BentoSpan`, `BadgeTone`), allowing isolated unit and Birdie snapshot testing and enabling rapid design-system prototyping in v2 (`F2.1`) without depending on the external `glelements` POC.
+4. **Feature Gating & Dark-Launch Safety (`Context.features`)**: Experimental routes (`/prototypes`), draft blog posts (`published: False`), and upcoming v2 interactive Living Resume controls (`enable_resume_filters`) are gated by `FeatureFlags`, defaulting to `False` in `prod_defaults()`.
+
+### Consequences
+- **Positive**: Adding a new route or theme variation is compiler-checked across both the live Wisp server and the GitHub Pages static exporter.
+- **Negative / Mitigation**: Because `export.gleam` calls `render_route` directly rather than going through `router.handle_request`, HTTP middleware (`serve_static`, method checks, `path_segments` parsing) must be explicitly covered by `wisp/simulate` tests in `test/dev_ing_website_test.gleam`.
