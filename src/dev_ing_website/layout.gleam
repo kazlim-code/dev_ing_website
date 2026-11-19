@@ -49,16 +49,6 @@ pub fn document(
         attribute.rel("stylesheet"),
         attribute.href(context.href(ctx, "/static/styles.css")),
       ]),
-      html.link([
-        attribute.rel("preload"),
-        attribute.attribute("as", "font"),
-        attribute.type_("font/woff2"),
-        attribute.href(context.href(
-          ctx,
-          "/static/fonts/JetBrainsMono-Regular.woff2",
-        )),
-        attribute.attribute("crossorigin", ""),
-      ]),
     ]),
     html.body([attribute.class(body_class)], [
       html.a([attribute.href("#main-content"), attribute.class("skip-link")], [

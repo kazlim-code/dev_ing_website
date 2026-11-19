@@ -4,6 +4,7 @@
 import dev_ing_website/context
 import dev_ing_website/export
 import filepath
+import gleam/bit_array
 import gleam/string
 import simplifile
 
@@ -52,11 +53,7 @@ pub fn export_site_copies_static_assets_nojekyll_and_about_alias_test() {
     == Ok(True)
   assert simplifile.is_file(filepath.join(out_dir, "static/styles.css"))
     == Ok(True)
-  assert simplifile.is_file(filepath.join(
-      out_dir,
-      "static/fonts/JetBrainsMono-Regular.woff2",
-    ))
-    == Ok(True)
+  assert simplifile.is_file(filepath.join(out_dir, "static/me.jpg")) == Ok(True)
 
   let _ = simplifile.delete(out_dir)
   Nil
@@ -239,4 +236,31 @@ pub fn export_site_rejects_nested_output_dir_inside_static_dir_test() {
   let _ = simplifile.delete(base_dir)
 
   assert result == Error(export.FileWriteError(nested_out, simplifile.Einval))
+}
+
+/// B1.5: Verifies `priv/static/me.jpg` is resized (`< 25 KB`) and free of EXIF/GPS metadata.
+///
+pub fn hero_avatar_asset_is_optimized_without_exif_test() {
+  let assert Ok(bytes) = simplifile.read_bits(from: "priv/static/me.jpg")
+  assert bit_array.byte_size(bytes) < 25_000
+  assert !contains_subarray(bytes, <<"Exif":utf8>>, 0)
+  assert !contains_subarray(bytes, <<"GPS":utf8>>, 0)
+}
+
+fn contains_subarray(
+  haystack: BitArray,
+  needle: BitArray,
+  offset: Int,
+) -> Bool {
+  let h_len = bit_array.byte_size(haystack)
+  let n_len = bit_array.byte_size(needle)
+
+  case offset + n_len > h_len {
+    True -> False
+    False ->
+      case bit_array.slice(haystack, offset, n_len) {
+        Ok(slice) if slice == needle -> True
+        _ -> contains_subarray(haystack, needle, offset + 1)
+      }
+  }
 }
