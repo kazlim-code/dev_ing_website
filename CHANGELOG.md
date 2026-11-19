@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `74` atomic tests and `4` accepted Birdie snapshots across mirrored `test/dev_ing_website/` modules (`wisp/simulate`, feature-gate dual-path tests, symlink/traversal regression tests, and exporter integration tests).
 - Documented Stage 4 read-only efficiency findings and deferred triggers in [EFFICIENCY-0001](docs/audits/EFFICIENCY-0001-wisp-lustre-bento-architecture.md).
 
+### Fixed
+- **B1.5 (`EFFICIENCY-0001` `E1`)**: Stripped EXIF `GPS-Data` metadata and resized `priv/static/me.jpg` from `256K` (`2944×2208`) to `176×176` (`4.8K` JPEG) for the hero portrait.
+- **B1.6 (`EFFICIENCY-0001` `E2`)**: Removed the corrupt `priv/static/fonts/JetBrainsMono-Regular.woff2` (Google 404 HTML page), its `@font-face` rule in `priv/static/styles.css`, and the broken `<link rel="preload">` from `src/dev_ing_website/layout.gleam`.
+
 ### Security
 - Enforced safe production defaults in `dev_ing_website.gleam` (`DEV_ING_ENV` opt-in for dev flags), strict HTTP security headers + CSP (`script-src 'none'`, `form-action 'none'`, `frame-ancestors 'none'`) wrapping `rescue_crashes`, and matching `<meta http-equiv="Content-Security-Policy">` tags for static exports.
 - Hardened static serving and static export against path traversal, percent-encoded dot segments, dotfile exposure (`.DS_Store`), control-character/backslash URL tricks in `context.href`, trailing-slash POSIX `lstat` symlink bypasses, nested `output_dir` recursion, and stale non-empty export targets (verified `findings: []` on Stage 3 Pass #3).
