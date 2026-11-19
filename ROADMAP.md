@@ -50,3 +50,5 @@ This roadmap tracks upcoming features, queued bug fixes, and AI architectural su
   - Once `dev_ing_website` runs on a live BEAM host in v2.2, transition GitHub Pages to a redirect or retire `export.gleam`.
 - **S3.3 — Retire `feature.prototypes_route.enabled` Gate (Trigger: After v2.1 visual design sign-off)**:
   - Keep `/prototypes` gated behind `Context.features.enable_prototypes` (ON in dev, OFF in prod export) until v2.1 visual experiments conclude.
+- **S3.4 — Retire Legacy Copy Typo Test (T06) (Trigger: First v1/v2 content copy rewrite)**:
+  - `resume_summary_fixes_legacy_git_typo_test` (`test/dev_ing_website/data/resume_test.gleam`) is a one-time migration guard for `B1.1`; remove it once resume copy diverges from the legacy `dev-ing` text.

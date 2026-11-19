@@ -192,7 +192,7 @@ We chose **Candidate A — Shared Pure View Renderer (`render_route`)** combined
 
 ### Consequences
 - **Positive**: Adding a new route or theme variation is compiler-checked across both the live Wisp server and the GitHub Pages static exporter.
-- **Negative / Mitigation**: Because `export.gleam` calls `render_route` directly rather than going through `router.handle_request`, HTTP middleware (`serve_static`, method checks, `path_segments` parsing) must be explicitly covered by `wisp/simulate` tests in `test/dev_ing_website_test.gleam`.
+- **Negative / Mitigation**: Because `export.gleam` calls `render_route` directly rather than going through `router.handle_request`, HTTP middleware (`serve_static`, method checks, `path_segments` parsing) must be explicitly covered by `wisp/simulate` tests in `test/dev_ing_website/router_test.gleam`.
 
 ---
 
@@ -209,7 +209,7 @@ We chose **Candidate A — Shared Pure View Renderer (`render_route`)** combined
   - `src/dev_ing_website/pages/{home,projects,blog,resume,prototypes}.gleam`: `view` functions returning `Element(Nil)`
   - `src/dev_ing_website/router.gleam`: `Route`, `parse_route`, `render_route`, `exportable_routes`, `handle_request`
   - `src/dev_ing_website/export.gleam`: `ExportError`, `ExportReport`, `export_site`, `main`
-- **Atomic Single-Responsibility Test Suite (`test/dev_ing_website_test.gleam`)**:
+- **Atomic Single-Responsibility Test Suite (`test/dev_ing_website/*_test.gleam` + `test/dev_ing_website_test.gleam` entry point)**:
   - `T01`–`T05`: Theme class resolution, custom theme injection into generic `bento.card` and `bento.badge`, and Birdie snapshot of `bento.card`.
   - `T06`–`T10`: Pure data integrity (`B1.1` typo fix, privacy check omitting street address/phone, `B1.2` project slugs, `B1.3` draft post exclusion when `Flag = OFF` and inclusion when `Flag = ON`).
   - `T11`–`T19`: Route parsing, `/about` -> `Resume` alias, `/prototypes` `Flag = OFF` (`NotFound`) vs `Flag = ON` (`Prototypes`), draft blog post `render_route` `Flag = OFF` (`404`) vs `Flag = ON` (`200`), Living Resume filter bar `Flag = OFF` vs `Flag = ON` (`data-resume-filter-bar`), and `context.href` base-path prefixing.
