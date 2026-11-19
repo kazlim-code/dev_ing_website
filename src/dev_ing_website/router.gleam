@@ -11,12 +11,14 @@ import dev_ing_website/pages/not_found
 import dev_ing_website/pages/projects
 import dev_ing_website/pages/prototypes
 import dev_ing_website/pages/resume as resume_page
+import filepath
 import gleam/http
 import gleam/http/response
 import gleam/list
 import gleam/string
 import gleam/uri
 import lustre/element
+import simplifile
 import wisp
 
 /// Typed multi-page application routes.
@@ -200,14 +202,27 @@ pub fn handle_request(
       let #(status, html) = render_not_found(ctx)
       wisp.html_response(html, status)
     }
-    ValidStaticRequest -> {
-      use <- wisp.serve_static(
-        req,
-        under: static_prefix,
-        from: ctx.static_directory,
-      )
-      render_matched_route(req, ctx)
-    }
+    ValidStaticRequest ->
+      case
+        is_symlink_free_static_target(
+          req.path,
+          static_prefix,
+          ctx.static_directory,
+        )
+      {
+        False -> {
+          let #(status, html) = render_not_found(ctx)
+          wisp.html_response(html, status)
+        }
+        True -> {
+          use <- wisp.serve_static(
+            req,
+            under: static_prefix,
+            from: ctx.static_directory,
+          )
+          render_matched_route(req, ctx)
+        }
+      }
     NonStaticRequest -> render_matched_route(req, ctx)
   }
 }
@@ -324,6 +339,77 @@ fn classify_static_request(
 
 fn matches_static_segment(path: String, prefix: String) -> Bool {
   path == prefix || string.starts_with(path, prefix <> "/")
+}
+
+fn is_symlink_free_static_target(
+  req_path: String,
+  static_prefix: String,
+  static_directory: String,
+) -> Bool {
+  let clean_req = strip_leading_slashes(req_path)
+  let clean_prefix = strip_leading_slashes(static_prefix)
+  let clean_root = strip_trailing_slashes(static_directory)
+
+  case uri.percent_decode(clean_req) {
+    Error(_) -> False
+    Ok(decoded_req) ->
+      case string.starts_with(decoded_req, clean_prefix <> "/") {
+        False -> False
+        True -> {
+          let rel_segments =
+            decoded_req
+            |> string.drop_start(string.length(clean_prefix) + 1)
+            |> string.split("/")
+            |> list.filter(fn(seg) { seg != "" })
+
+          case rel_segments {
+            [] -> False
+            _ ->
+              case link_info_type(clean_root) {
+                Ok(simplifile.Directory) ->
+                  verify_segments_without_symlinks(clean_root, rel_segments)
+                _ -> False
+              }
+          }
+        }
+      }
+  }
+}
+
+fn verify_segments_without_symlinks(
+  current_dir: String,
+  segments: List(String),
+) -> Bool {
+  case segments {
+    [] -> False
+    [leaf] ->
+      case link_info_type(filepath.join(current_dir, leaf)) {
+        Ok(simplifile.File) -> True
+        _ -> False
+      }
+    [dir, ..rest] -> {
+      let next_dir = filepath.join(current_dir, dir)
+      case link_info_type(next_dir) {
+        Ok(simplifile.Directory) ->
+          verify_segments_without_symlinks(next_dir, rest)
+        _ -> False
+      }
+    }
+  }
+}
+
+fn link_info_type(path: String) -> Result(simplifile.FileType, Nil) {
+  case simplifile.link_info(path) {
+    Ok(info) -> Ok(simplifile.file_info_type(info))
+    Error(_) -> Error(Nil)
+  }
+}
+
+fn strip_trailing_slashes(value: String) -> String {
+  case string.ends_with(value, "/") && value != "/" {
+    True -> strip_trailing_slashes(string.drop_end(value, 1))
+    False -> value
+  }
 }
 
 fn has_unsafe_path_pattern(path: String) -> Bool {

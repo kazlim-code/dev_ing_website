@@ -406,6 +406,52 @@ pub fn layout_includes_meta_csp_for_static_hosting_test() {
   assert string.contains(html_doc, "http-equiv=\"Content-Security-Policy\"")
 }
 
+/// SEC-P2-01: Verifies symlinked files inside static directory are blocked with 404.
+///
+pub fn wisp_blocks_symlinked_static_file_test() {
+  let base_dir = "/tmp/dev_ing_website_sec_p2_symlink_file_test"
+  let static_dir = filepath.join(base_dir, "static")
+  let secret_file = filepath.join(base_dir, "secret.txt")
+  let link_file = filepath.join(static_dir, "leak.txt")
+  let _ = simplifile.delete(base_dir)
+  let assert Ok(Nil) = simplifile.create_directory_all(static_dir)
+  let assert Ok(Nil) = simplifile.write(to: secret_file, contents: "TOP_SECRET")
+  let assert Ok(Nil) =
+    simplifile.create_symlink(to: secret_file, from: link_file)
+
+  let prod_ctx = context.prod_context(static_dir, "")
+  let res =
+    simulate.request(http.Get, "/static/leak.txt")
+    |> router.handle_request(prod_ctx)
+
+  let _ = simplifile.delete(base_dir)
+  assert res.status == 404
+}
+
+/// SEC-P2-01: Verifies symlinked subdirectories inside static directory are blocked with 404.
+///
+pub fn wisp_blocks_symlinked_static_dir_test() {
+  let base_dir = "/tmp/dev_ing_website_sec_p2_symlink_dir_test"
+  let static_dir = filepath.join(base_dir, "static")
+  let external_dir = filepath.join(base_dir, "external")
+  let secret_file = filepath.join(external_dir, "secret.txt")
+  let link_dir = filepath.join(static_dir, "sub")
+  let _ = simplifile.delete(base_dir)
+  let assert Ok(Nil) = simplifile.create_directory_all(static_dir)
+  let assert Ok(Nil) = simplifile.create_directory_all(external_dir)
+  let assert Ok(Nil) = simplifile.write(to: secret_file, contents: "TOP_SECRET")
+  let assert Ok(Nil) =
+    simplifile.create_symlink(to: external_dir, from: link_dir)
+
+  let prod_ctx = context.prod_context(static_dir, "")
+  let res =
+    simulate.request(http.Get, "/static/sub/secret.txt")
+    |> router.handle_request(prod_ctx)
+
+  let _ = simplifile.delete(base_dir)
+  assert res.status == 404
+}
+
 /// T21: Verifies `GET /` via `wisp/simulate` returns 200 and matches the Home page Birdie snapshot.
 ///
 pub fn home_page_wisp_snapshot_test() {

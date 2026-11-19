@@ -12,6 +12,8 @@ import gleam/result
 import gleam/string
 import simplifile
 
+const max_static_copy_depth = 32
+
 /// Errors that can occur during static site export.
 ///
 pub type ExportError {
@@ -26,25 +28,39 @@ pub type ExportReport {
 
 /// Exports all enabled routes and static assets to `output_dir`.
 ///
-/// Refuses to export into an existing non-empty directory so stale artifacts from
-/// prior development exports cannot silently persist into production builds.
+/// Refuses to export into an existing non-empty directory, across symlinks, or
+/// into a directory nested inside `ctx.static_directory`.
 ///
 pub fn export_site(
   ctx ctx: Context,
   output_dir output_dir: String,
 ) -> Result(ExportReport, ExportError) {
-  case string.trim(output_dir) == "" {
+  case
+    string.trim(output_dir) == "" || string.contains(output_dir, "\u{0000}")
+  {
     True -> Error(FileWriteError(output_dir, simplifile.Einval))
     False -> {
-      use _ <- result.try(ensure_clean_output_dir(output_dir))
-      use _ <- result.try(create_dir_mapped(output_dir))
+      let clean_output_dir = strip_trailing_slashes(output_dir)
+      let clean_static_dir = strip_trailing_slashes(ctx.static_directory)
+
+      use _ <- result.try(ensure_real_directory(
+        clean_static_dir,
+        ctx.static_directory,
+      ))
+      use _ <- result.try(ensure_not_nested_inside_static(
+        clean_static_dir,
+        clean_output_dir,
+        output_dir,
+      ))
+      use _ <- result.try(ensure_clean_output_dir(clean_output_dir, output_dir))
+      use _ <- result.try(create_dir_mapped(clean_output_dir))
 
       use page_files <- result.try(
         list.try_fold(router.exportable_routes(ctx), [], fn(acc, entry) {
           let #(route, rel_path) = entry
           use _ <- result.try(validate_relative_path(rel_path))
 
-          let full_path = filepath.join(output_dir, rel_path)
+          let full_path = filepath.join(clean_output_dir, rel_path)
           let parent_dir = filepath.directory_name(full_path)
           use _ <- result.try(create_dir_mapped(parent_dir))
 
@@ -54,13 +70,14 @@ pub fn export_site(
         }),
       )
 
-      let nojekyll_path = filepath.join(output_dir, ".nojekyll")
+      let nojekyll_path = filepath.join(clean_output_dir, ".nojekyll")
       use _ <- result.try(write_file_mapped(nojekyll_path, ""))
 
-      let static_dest = filepath.join(output_dir, "static")
+      let static_dest = filepath.join(clean_output_dir, "static")
       use static_files <- result.try(copy_directory_strict(
-        ctx.static_directory,
+        clean_static_dir,
         static_dest,
+        0,
       ))
 
       let files_written =
@@ -74,9 +91,14 @@ pub fn export_site(
 /// CLI entrypoint (`gleam run -m dev_ing_website/export`).
 ///
 pub fn main() -> Nil {
-  let clean_result = case simplifile.delete("dist") {
-    Ok(Nil) | Error(simplifile.Enoent) -> Ok(Nil)
+  let clean_result = case simplifile.link_info("dist") {
+    Error(simplifile.Enoent) -> Ok(Nil)
     Error(reason) -> Error(reason)
+    Ok(info) ->
+      case simplifile.file_info_type(info) {
+        simplifile.Symlink -> Error(simplifile.Eloop)
+        _ -> simplifile.delete("dist")
+      }
   }
 
   case clean_result {
@@ -117,19 +139,65 @@ pub fn main() -> Nil {
   }
 }
 
-fn ensure_clean_output_dir(output_dir: String) -> Result(Nil, ExportError) {
-  case simplifile.link_info(output_dir) {
+fn ensure_real_directory(
+  clean_path: String,
+  raw_path: String,
+) -> Result(Nil, ExportError) {
+  case simplifile.link_info(clean_path) {
+    Error(reason) -> Error(FileWriteError(raw_path, reason))
+    Ok(info) ->
+      case simplifile.file_info_type(info) {
+        simplifile.Directory -> Ok(Nil)
+        simplifile.File -> Error(FileWriteError(raw_path, simplifile.Enotdir))
+        simplifile.Symlink | simplifile.Other ->
+          Error(FileWriteError(raw_path, simplifile.Eloop))
+      }
+  }
+}
+
+fn ensure_not_nested_inside_static(
+  clean_static_dir: String,
+  clean_output_dir: String,
+  raw_output_dir: String,
+) -> Result(Nil, ExportError) {
+  use resolved_src <- result.try(
+    simplifile.resolve(clean_static_dir)
+    |> result.map_error(fn(err) { FileWriteError(clean_static_dir, err) }),
+  )
+  use resolved_out <- result.try(
+    simplifile.resolve(clean_output_dir)
+    |> result.map_error(fn(err) { FileWriteError(raw_output_dir, err) }),
+  )
+
+  let is_nested =
+    resolved_src == "/"
+    || resolved_out == resolved_src
+    || string.starts_with(resolved_out, resolved_src <> "/")
+
+  case is_nested {
+    True -> Error(FileWriteError(raw_output_dir, simplifile.Einval))
+    False -> Ok(Nil)
+  }
+}
+
+fn ensure_clean_output_dir(
+  clean_output_dir: String,
+  raw_output_dir: String,
+) -> Result(Nil, ExportError) {
+  case simplifile.link_info(clean_output_dir) {
     Error(simplifile.Enoent) -> Ok(Nil)
-    Error(reason) -> Error(FileWriteError(output_dir, reason))
+    Error(reason) -> Error(FileWriteError(raw_output_dir, reason))
     Ok(info) ->
       case simplifile.file_info_type(info) {
         simplifile.Directory ->
-          case simplifile.read_directory(output_dir) {
+          case simplifile.read_directory(clean_output_dir) {
             Ok([]) -> Ok(Nil)
-            Ok(_) -> Error(FileWriteError(output_dir, simplifile.Eexist))
-            Error(reason) -> Error(FileWriteError(output_dir, reason))
+            Ok(_) -> Error(FileWriteError(raw_output_dir, simplifile.Eexist))
+            Error(reason) -> Error(FileWriteError(raw_output_dir, reason))
           }
-        _ -> Error(FileWriteError(output_dir, simplifile.Eexist))
+        simplifile.Symlink ->
+          Error(FileWriteError(raw_output_dir, simplifile.Eloop))
+        _ -> Error(FileWriteError(raw_output_dir, simplifile.Eexist))
       }
   }
 }
@@ -154,15 +222,12 @@ fn validate_relative_path(rel_path: String) -> Result(Nil, ExportError) {
 fn copy_directory_strict(
   src_dir: String,
   dest_dir: String,
+  depth: Int,
 ) -> Result(List(String), ExportError) {
-  use is_dir <- result.try(
-    simplifile.is_directory(src_dir)
-    |> result.map_error(fn(err) { FileWriteError(src_dir, err) }),
-  )
-
-  case is_dir {
-    False -> Error(FileWriteError(src_dir, simplifile.Enotdir))
-    True -> {
+  case depth > max_static_copy_depth {
+    True -> Error(FileWriteError(src_dir, simplifile.Eloop))
+    False -> {
+      use _ <- result.try(ensure_real_directory(src_dir, src_dir))
       use _ <- result.try(create_dir_mapped(dest_dir))
       use entries <- result.try(
         simplifile.read_directory(src_dir)
@@ -209,6 +274,7 @@ fn copy_directory_strict(
                     use nested <- result.try(copy_directory_strict(
                       src_path,
                       dest_path,
+                      depth + 1,
                     ))
                     Ok(list.append(acc, nested))
                   }
@@ -220,6 +286,13 @@ fn copy_directory_strict(
         }
       })
     }
+  }
+}
+
+fn strip_trailing_slashes(value: String) -> String {
+  case string.ends_with(value, "/") && value != "/" {
+    True -> strip_trailing_slashes(string.drop_end(value, 1))
+    False -> value
   }
 }
 

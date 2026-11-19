@@ -183,3 +183,60 @@ pub fn export_site_skips_dotfiles_in_static_dir_test() {
   assert ok_exists == Ok(True)
   assert dotfile_exists == Ok(False)
 }
+
+/// SEC-P2-02: Verifies `export.export_site` rejects a symlinked `static_directory`.
+///
+pub fn export_site_rejects_symlinked_static_directory_test() {
+  let base_dir = "/tmp/dev_ing_website_sec_p2_static_link_test"
+  let real_static = filepath.join(base_dir, "real_static")
+  let link_static = filepath.join(base_dir, "link_static")
+  let out_dir = filepath.join(base_dir, "out")
+  let _ = simplifile.delete(base_dir)
+
+  let assert Ok(Nil) = simplifile.create_directory_all(real_static)
+  let assert Ok(Nil) =
+    simplifile.write(to: filepath.join(real_static, "app.css"), contents: "a{}")
+  let assert Ok(Nil) =
+    simplifile.create_symlink(to: real_static, from: link_static)
+
+  let ctx = context.prod_context(link_static, "")
+  let result = export.export_site(ctx, out_dir)
+  let _ = simplifile.delete(base_dir)
+
+  assert result == Error(export.FileWriteError(link_static, simplifile.Eloop))
+}
+
+/// SEC-P2-03: Verifies `export.export_site` rejects a trailing-slash symlinked `output_dir`.
+///
+pub fn export_site_rejects_trailing_slash_symlinked_output_dir_test() {
+  let base_dir = "/tmp/dev_ing_website_sec_p2_out_link_test"
+  let target_dir = filepath.join(base_dir, "target")
+  let link_out = filepath.join(base_dir, "out_link")
+  let _ = simplifile.delete(base_dir)
+
+  let assert Ok(Nil) = simplifile.create_directory_all(target_dir)
+  let assert Ok(Nil) = simplifile.create_symlink(to: target_dir, from: link_out)
+
+  let ctx = context.prod_context("priv/static", "")
+  let result = export.export_site(ctx, link_out <> "/")
+  let _ = simplifile.delete(base_dir)
+
+  assert result
+    == Error(export.FileWriteError(link_out <> "/", simplifile.Eloop))
+}
+
+/// SEC-P2-04: Verifies `export.export_site` rejects `output_dir` nested inside `static_directory`.
+///
+pub fn export_site_rejects_nested_output_dir_inside_static_dir_test() {
+  let base_dir = "/tmp/dev_ing_website_sec_p2_nested_out_test"
+  let static_dir = filepath.join(base_dir, "static")
+  let nested_out = filepath.join(static_dir, "dist")
+  let _ = simplifile.delete(base_dir)
+  let assert Ok(Nil) = simplifile.create_directory_all(static_dir)
+
+  let ctx = context.prod_context(static_dir, "")
+  let result = export.export_site(ctx, nested_out)
+  let _ = simplifile.delete(base_dir)
+
+  assert result == Error(export.FileWriteError(nested_out, simplifile.Einval))
+}

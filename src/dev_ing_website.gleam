@@ -59,9 +59,13 @@ fn resolve_static_directory() -> String {
   case wisp.priv_directory("dev_ing_website") {
     Ok(priv_dir) -> {
       let candidate = filepath.join(priv_dir, "static")
-      case simplifile.is_directory(candidate) {
-        Ok(True) -> candidate
-        _ -> "priv/static"
+      case simplifile.link_info(candidate) {
+        Ok(info) ->
+          case simplifile.file_info_type(info) {
+            simplifile.Directory -> candidate
+            _ -> "priv/static"
+          }
+        Error(_) -> "priv/static"
       }
     }
     Error(Nil) -> "priv/static"
