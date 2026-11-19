@@ -16,8 +16,8 @@ This roadmap tracks upcoming features, queued bug fixes, and AI architectural su
   - Pure Gleam data modules for Personal & Work projects (`Dev.Ing`, `Wyrd Technology`, `Grafa`, plus `Glelements` documented as an early Lustre UI POC), blog posts (`what-is-dev-ing`, `what-is-jj`), and a dedicated **Living Resume** page (`/resume` with `/about` alias).
 - [ ] **F1.4 — Hybrid GitHub Pages Static Multi-Page Exporter (`export`)**:
   - CLI command (`gleam run -m dev_ing_website/export`) that renders all routes to static HTML files (`dist/index.html`, `dist/projects/index.html`, `dist/blog/index.html`, `dist/blog/<slug>/index.html`, `dist/resume/index.html`, `dist/404.html`) and copies `priv/static/` assets for zero-cost GitHub Pages deployment.
-- [ ] **F1.5 — Feature Gating & Dark-Launch Config (`Context.features`)**:
-  - Typed feature flags in `Context` (e.g., `enable_prototypes_route`, `enable_unpublished_posts`) defaulting to `False` in production static exports.
+- [ ] **F1.5 — Feature Gating & Dark-Launch Config (`Context` Flag Accessors)**:
+  - Typed feature flags in `Context` (`enable_prototypes_route`, `enable_unpublished_posts`, `enable_resume_filters`) accessed through pure query helpers (`context.prototypes_enabled(ctx)`, etc.) and defaulting to `False` in production static exports. Using accessor functions decouples views/routers from the storage mechanism so v2 can swap in runtime OTP/DB lookups without touching route or view code.
 
 ### Version 2.0 — Design System Prototyping, Fun Interactive Resume & Live BEAM Hosting (Upcoming)
 - [ ] **F2.1 — Fun & Cool Design System Prototyping (Fleshing Out the Look & Feel)**:
@@ -27,8 +27,9 @@ This roadmap tracks upcoming features, queued bug fixes, and AI architectural su
   - Deploy the live Wisp + Mist HTTP server to a BEAM-friendly host (Fly.io, Railway, or VPS) with zero view rewrites.
 - [ ] **F2.3 — Standout, Fun & Highly Interactive Living Resume (`/resume`)**:
   - Interactivity is **KEY** on `/resume`: make the page stand out as crystal-clear, functional, and genuinely fun to explore (interactive technology/skill filtering, playful interactive timeline/role inspection, print/PDF-ready mode, and rich engineering case studies for Wyrd Technology and Grafa).
-- [ ] **F2.4 — Dynamic Blog CMS, Search & OTP Actor Telemetry**:
-  - Add dynamic blog post management, tag/search filtering, and optional SQLite/PostgreSQL persistence + OTP actor services once hosted on a live BEAM server.
+- [ ] **F2.4 — Dynamic Blog CMS, Runtime Feature Flag Toggling (OTP / DB) & Telemetry**:
+  - Add runtime feature-flag toggling without redeployment on the live BEAM server (backed by an in-memory OTP Actor / ETS cache hydrated from SQLite/PostgreSQL or an admin endpoint, plugged directly into `context.*_enabled(ctx)`).
+  - Add dynamic blog post management, tag/search filtering, and OTP actor services.
 
 ---
 

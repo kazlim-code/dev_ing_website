@@ -30,6 +30,10 @@ Tracks mid-workflow user corrections, friction points, and process improvements 
    - **Observation**: Calling `ask_question` in the same tool batch immediately after receiving subagent spike results displays the question modal *before* the assistant's markdown text response renders, so the user sees the question without the spike metrics, charts, or snippets.
    - **Process Improvement**: Either present the full Phase 2 spike comparison (table, `xychart-beta`, architecture diagram, and code snippets) in the chat response first (or embed the summary directly in the prompt/artifact) before prompting for the decision gate.
 
+7. **[2026-11-19] Atomic, Single-Responsibility Unit Tests in TDD Matrix**:
+   - **Observation**: The initial Phase 3 TDD matrix bundled multiple routes, flag states (`OFF` and `ON`), and Birdie snapshots into composite test functions (`T04`, `T05`, `T07`–`T09`).
+   - **Process Improvement**: Design every test in the Phase 3 TDD Specification Matrix to test **one behavior or assertion target at a time** (separate `_flag_off_test` vs. `_flag_on_test`, one route or snapshot per test), only bundling assertions when fixture setup cost (such as a full filesystem export) justifies sharing setup.
+
 7. **[2026-11-19] Explain "What Problem the Spikes Solve & What the Framework Mechanism Does" in Phase 2 Reports**:
    - **Observation**: Presenting raw spike metrics (`LOC`, `wisp/simulate` import counts) without first explaining in plain terms what problem the two spikes are solving and what `wisp/simulate` actually does under the hood left the architectural trade-off unclear until explained in a follow-up.
    - **Process Improvement**: Every Phase 2 spike report and ADR must open with a short, plain-English **Conceptual Overview** explaining (1) the problem being solved, (2) how the underlying library/framework mechanism works, and (3) the concrete trade-off between Candidate A and Candidate B.
