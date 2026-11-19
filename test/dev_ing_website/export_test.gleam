@@ -139,3 +139,47 @@ pub fn export_site_returns_error_for_missing_static_dir_test() {
   let assert Error(_) = result
   Nil
 }
+
+/// Verifies `export.export_site` refuses a non-empty `output_dir` so stale dev artifacts cannot persist.
+///
+pub fn export_site_rejects_non_empty_output_dir_test() {
+  let prod_ctx = context.prod_context("priv/static", "")
+  let out_dir = "/tmp/dev_ing_website_stage3_non_empty_test"
+  let _ = simplifile.delete(out_dir)
+  let assert Ok(Nil) = simplifile.create_directory_all(out_dir)
+  let stale_file = filepath.join(out_dir, "stale.html")
+  let assert Ok(Nil) = simplifile.write(to: stale_file, contents: "stale")
+
+  let result = export.export_site(prod_ctx, out_dir)
+  let _ = simplifile.delete(out_dir)
+
+  assert result == Error(export.FileWriteError(out_dir, simplifile.Eexist))
+}
+
+/// Verifies `export.export_site` skips dotfiles (such as `.DS_Store`) in `static_directory`.
+///
+pub fn export_site_skips_dotfiles_in_static_dir_test() {
+  let src_dir = "/tmp/dev_ing_website_stage3_src_dotfile_test"
+  let out_dir = "/tmp/dev_ing_website_stage3_out_dotfile_test"
+  let _ = simplifile.delete(src_dir)
+  let _ = simplifile.delete(out_dir)
+
+  let assert Ok(Nil) = simplifile.create_directory_all(src_dir)
+  let assert Ok(Nil) =
+    simplifile.write(to: filepath.join(src_dir, "ok.css"), contents: "body{}")
+  let assert Ok(Nil) =
+    simplifile.write(to: filepath.join(src_dir, ".DS_Store"), contents: "junk")
+
+  let ctx = context.prod_context(src_dir, "")
+  let assert Ok(_report) = export.export_site(ctx, out_dir)
+
+  let ok_exists = simplifile.is_file(filepath.join(out_dir, "static/ok.css"))
+  let dotfile_exists =
+    simplifile.is_file(filepath.join(out_dir, "static/.DS_Store"))
+
+  let _ = simplifile.delete(src_dir)
+  let _ = simplifile.delete(out_dir)
+
+  assert ok_exists == Ok(True)
+  assert dotfile_exists == Ok(False)
+}

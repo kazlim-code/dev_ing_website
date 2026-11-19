@@ -4,6 +4,7 @@
 import dev_ing_website/context.{type Context}
 import dev_ing_website/router
 import filepath
+import gleam/erlang/charlist
 import gleam/int
 import gleam/io
 import gleam/list
@@ -25,6 +26,9 @@ pub type ExportReport {
 
 /// Exports all enabled routes and static assets to `output_dir`.
 ///
+/// Refuses to export into an existing non-empty directory so stale artifacts from
+/// prior development exports cannot silently persist into production builds.
+///
 pub fn export_site(
   ctx ctx: Context,
   output_dir output_dir: String,
@@ -32,6 +36,7 @@ pub fn export_site(
   case string.trim(output_dir) == "" {
     True -> Error(FileWriteError(output_dir, simplifile.Einval))
     False -> {
+      use _ <- result.try(ensure_clean_output_dir(output_dir))
       use _ <- result.try(create_dir_mapped(output_dir))
 
       use page_files <- result.try(
@@ -69,30 +74,65 @@ pub fn export_site(
 /// CLI entrypoint (`gleam run -m dev_ing_website/export`).
 ///
 pub fn main() -> Nil {
-  let _ = simplifile.delete("dist")
-  let ctx = context.prod_context("priv/static", "/dev_ing")
-  case export_site(ctx:, output_dir: "dist") {
-    Ok(report) ->
-      io.println(
-        "Exported "
-        <> int.to_string(list.length(report.files_written))
-        <> " files to "
-        <> report.output_dir,
-      )
-    Error(FileWriteError(path, reason)) -> {
+  let clean_result = case simplifile.delete("dist") {
+    Ok(Nil) | Error(simplifile.Enoent) -> Ok(Nil)
+    Error(reason) -> Error(reason)
+  }
+
+  case clean_result {
+    Error(reason) -> {
       io.println_error(
-        "Static export failed at "
-        <> path
-        <> ": "
-        <> simplifile.describe_error(reason),
+        "Failed to clean dist/: " <> simplifile.describe_error(reason),
       )
       halt(1)
+    }
+    Ok(Nil) -> {
+      let base_path =
+        os_getenv(
+          charlist.from_string("DEV_ING_BASE_PATH"),
+          charlist.from_string("/dev_ing"),
+        )
+        |> charlist.to_string
+      let ctx = context.prod_context("priv/static", base_path)
+
+      case export_site(ctx:, output_dir: "dist") {
+        Ok(report) ->
+          io.println(
+            "Exported "
+            <> int.to_string(list.length(report.files_written))
+            <> " files to "
+            <> report.output_dir,
+          )
+        Error(FileWriteError(path, reason)) -> {
+          io.println_error(
+            "Static export failed at "
+            <> path
+            <> ": "
+            <> simplifile.describe_error(reason),
+          )
+          halt(1)
+        }
+      }
     }
   }
 }
 
-@external(erlang, "erlang", "halt")
-fn halt(status: Int) -> Nil
+fn ensure_clean_output_dir(output_dir: String) -> Result(Nil, ExportError) {
+  case simplifile.link_info(output_dir) {
+    Error(simplifile.Enoent) -> Ok(Nil)
+    Error(reason) -> Error(FileWriteError(output_dir, reason))
+    Ok(info) ->
+      case simplifile.file_info_type(info) {
+        simplifile.Directory ->
+          case simplifile.read_directory(output_dir) {
+            Ok([]) -> Ok(Nil)
+            Ok(_) -> Error(FileWriteError(output_dir, simplifile.Eexist))
+            Error(reason) -> Error(FileWriteError(output_dir, reason))
+          }
+        _ -> Error(FileWriteError(output_dir, simplifile.Eexist))
+      }
+  }
+}
 
 fn validate_relative_path(rel_path: String) -> Result(Nil, ExportError) {
   let has_bad_segment =
@@ -143,34 +183,40 @@ fn copy_directory_strict(
               filepath.join(src_dir, entry),
               simplifile.Einval,
             ))
-          False -> {
-            let src_path = filepath.join(src_dir, entry)
-            let dest_path = filepath.join(dest_dir, entry)
+          False ->
+            case string.starts_with(entry, ".") {
+              True -> Ok(acc)
+              False -> {
+                let src_path = filepath.join(src_dir, entry)
+                let dest_path = filepath.join(dest_dir, entry)
 
-            use info <- result.try(
-              simplifile.link_info(src_path)
-              |> result.map_error(fn(err) { FileWriteError(src_path, err) }),
-            )
-
-            case simplifile.file_info_type(info) {
-              simplifile.File -> {
-                use _ <- result.try(
-                  simplifile.copy_file(at: src_path, to: dest_path)
-                  |> result.map_error(fn(err) { FileWriteError(dest_path, err) }),
+                use info <- result.try(
+                  simplifile.link_info(src_path)
+                  |> result.map_error(fn(err) { FileWriteError(src_path, err) }),
                 )
-                Ok(list.append(acc, [dest_path]))
+
+                case simplifile.file_info_type(info) {
+                  simplifile.File -> {
+                    use _ <- result.try(
+                      simplifile.copy_file(at: src_path, to: dest_path)
+                      |> result.map_error(fn(err) {
+                        FileWriteError(dest_path, err)
+                      }),
+                    )
+                    Ok(list.append(acc, [dest_path]))
+                  }
+                  simplifile.Directory -> {
+                    use nested <- result.try(copy_directory_strict(
+                      src_path,
+                      dest_path,
+                    ))
+                    Ok(list.append(acc, nested))
+                  }
+                  simplifile.Symlink | simplifile.Other ->
+                    Error(FileWriteError(src_path, simplifile.Eloop))
+                }
               }
-              simplifile.Directory -> {
-                use nested <- result.try(copy_directory_strict(
-                  src_path,
-                  dest_path,
-                ))
-                Ok(list.append(acc, nested))
-              }
-              simplifile.Symlink | simplifile.Other ->
-                Error(FileWriteError(src_path, simplifile.Eloop))
             }
-          }
         }
       })
     }
@@ -189,3 +235,12 @@ fn write_file_mapped(
   simplifile.write(to: path, contents:)
   |> result.map_error(fn(err) { FileWriteError(path, err) })
 }
+
+@external(erlang, "os", "getenv")
+fn os_getenv(
+  name: charlist.Charlist,
+  default: charlist.Charlist,
+) -> charlist.Charlist
+
+@external(erlang, "erlang", "halt")
+fn halt(status: Int) -> Nil

@@ -2,6 +2,7 @@
 ////
 
 import dev_ing_website/theme.{type Theme}
+import gleam/list
 import gleam/string
 
 /// Feature flags controlling dark-launched routes and capabilities.
@@ -93,7 +94,7 @@ pub fn resume_filters_enabled(ctx ctx: Context) -> Bool {
 pub fn href(ctx ctx: Context, path path: String) -> String {
   let clean_path =
     path
-    |> string.trim
+    |> sanitize_path_value
     |> strip_leading_slashes
   let normalized_path = "/" <> clean_path
 
@@ -110,7 +111,7 @@ pub fn href(ctx ctx: Context, path path: String) -> String {
 fn normalize_base_path(raw: String) -> String {
   let cleaned =
     raw
-    |> string.trim
+    |> sanitize_path_value
     |> strip_leading_slashes
     |> strip_trailing_slashes
 
@@ -118,6 +119,23 @@ fn normalize_base_path(raw: String) -> String {
     "" -> ""
     _ -> "/" <> cleaned
   }
+}
+
+fn sanitize_path_value(value: String) -> String {
+  value
+  |> strip_control_chars
+  |> string.trim
+  |> string.replace(each: "\\", with: "/")
+}
+
+fn strip_control_chars(value: String) -> String {
+  value
+  |> string.to_utf_codepoints
+  |> list.filter(fn(cp) {
+    let code = string.utf_codepoint_to_int(cp)
+    code >= 32 && code != 127
+  })
+  |> string.from_utf_codepoints
 }
 
 fn strip_leading_slashes(value: String) -> String {

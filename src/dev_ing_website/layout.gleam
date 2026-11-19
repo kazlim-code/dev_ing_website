@@ -38,6 +38,12 @@ pub fn document(
         attribute.name("description"),
         attribute.content(meta.description),
       ]),
+      html.meta([
+        attribute.attribute("http-equiv", "Content-Security-Policy"),
+        attribute.content(
+          "default-src 'self'; img-src 'self' data:; style-src 'self'; font-src 'self'; script-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'",
+        ),
+      ]),
       html.title([], meta.title <> " | dev_ing"),
       html.link([
         attribute.rel("stylesheet"),

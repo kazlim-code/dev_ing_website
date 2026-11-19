@@ -4,6 +4,7 @@
 import dev_ing_website/context
 import dev_ing_website/router
 import filepath
+import gleam/erlang/charlist
 import gleam/erlang/process
 import gleam/io
 import gleam/string
@@ -12,13 +13,30 @@ import simplifile
 import wisp
 import wisp/wisp_mist
 
-/// Starts the local Wisp + Mist web server on port 8000 using development context defaults.
+/// Resolves runtime `Context` from `DEV_ING_ENV` (`"dev"` or `"development"` enables
+/// development flags; all other values default safely to production flags).
+///
+pub fn context_for_env(
+  env_value env_value: String,
+  static_directory static_directory: String,
+) -> context.Context {
+  case string.lowercase(string.trim(env_value)) {
+    "dev" | "development" -> context.dev_context(static_directory:)
+    _ -> context.prod_context(static_directory:, base_path: "")
+  }
+}
+
+/// Starts the local Wisp + Mist web server on port 8000, defaulting to production
+/// feature flags unless `DEV_ING_ENV` is set to `"dev"` or `"development"`.
 ///
 pub fn main() -> Nil {
   wisp.configure_logger()
   let secret_key_base = wisp.random_string(64)
   let static_directory = resolve_static_directory()
-  let ctx = context.dev_context(static_directory:)
+  let env_mode =
+    os_getenv(charlist.from_string("DEV_ING_ENV"), charlist.from_string("prod"))
+    |> charlist.to_string
+  let ctx = context_for_env(env_value: env_mode, static_directory:)
 
   case
     router.handle_request(_, ctx)
@@ -37,9 +55,6 @@ pub fn main() -> Nil {
   }
 }
 
-@external(erlang, "erlang", "halt")
-fn halt(status: Int) -> Nil
-
 fn resolve_static_directory() -> String {
   case wisp.priv_directory("dev_ing_website") {
     Ok(priv_dir) -> {
@@ -52,3 +67,12 @@ fn resolve_static_directory() -> String {
     Error(Nil) -> "priv/static"
   }
 }
+
+@external(erlang, "os", "getenv")
+fn os_getenv(
+  name: charlist.Charlist,
+  default: charlist.Charlist,
+) -> charlist.Charlist
+
+@external(erlang, "erlang", "halt")
+fn halt(status: Int) -> Nil

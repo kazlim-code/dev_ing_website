@@ -187,42 +187,54 @@ pub fn handle_request(
   req req: wisp.Request,
   ctx ctx: Context,
 ) -> wisp.Response {
+  use <- apply_security_headers
   use req <- wisp.handle_head(req)
   use <- wisp.log_request(req)
   use <- wisp.rescue_crashes
+  use <- wisp.require_method(req, http.Get)
 
-  let resp = {
-    use <- wisp.require_method(req, http.Get)
-    let static_prefix = context.href(ctx, "/static")
+  let static_prefix = context.href(ctx, "/static")
 
-    case is_unsafe_static_request(req.path, static_prefix) {
-      True -> {
-        let #(status, html) = render_not_found(ctx)
-        wisp.html_response(html, status)
-      }
-      False -> {
-        use <- wisp.serve_static(
-          req,
-          under: static_prefix,
-          from: ctx.static_directory,
-        )
-
-        let segments =
-          wisp.path_segments(req)
-          |> strip_base_path(ctx.base_path)
-
-        let route = case segments {
-          Ok(route_segments) -> parse_route(route_segments, ctx)
-          Error(Nil) -> NotFound
-        }
-
-        let #(status, html) = render_route(ctx, route)
-        wisp.html_response(html, status)
-      }
+  case classify_static_request(req.path, static_prefix) {
+    UnsafeStaticRequest -> {
+      let #(status, html) = render_not_found(ctx)
+      wisp.html_response(html, status)
     }
+    ValidStaticRequest -> {
+      use <- wisp.serve_static(
+        req,
+        under: static_prefix,
+        from: ctx.static_directory,
+      )
+      render_matched_route(req, ctx)
+    }
+    NonStaticRequest -> render_matched_route(req, ctx)
+  }
+}
+
+type StaticRequestClass {
+  NonStaticRequest
+  UnsafeStaticRequest
+  ValidStaticRequest
+}
+
+fn render_matched_route(req: wisp.Request, ctx: Context) -> wisp.Response {
+  let segments =
+    wisp.path_segments(req)
+    |> strip_base_path(ctx.base_path)
+
+  let route = case segments {
+    Ok(route_segments) -> parse_route(route_segments, ctx)
+    Error(Nil) -> NotFound
   }
 
-  add_security_headers(resp)
+  let #(status, html) = render_route(ctx, route)
+  wisp.html_response(html, status)
+}
+
+fn apply_security_headers(next: fn() -> wisp.Response) -> wisp.Response {
+  next()
+  |> add_security_headers
 }
 
 fn render_page(
@@ -273,26 +285,45 @@ fn strip_prefix_segments(
   }
 }
 
-fn is_unsafe_static_request(req_path: String, static_prefix: String) -> Bool {
+fn classify_static_request(
+  req_path: String,
+  static_prefix: String,
+) -> StaticRequestClass {
   let clean_req = strip_leading_slashes(req_path)
   let clean_prefix = strip_leading_slashes(static_prefix)
 
-  let matches_prefix = case uri.percent_decode(clean_req) {
-    Ok(decoded) ->
-      string.starts_with(clean_req, clean_prefix)
-      || string.starts_with(decoded, clean_prefix)
-    Error(_) -> string.starts_with(clean_req, clean_prefix)
-  }
-
-  case matches_prefix {
-    False -> False
-    True ->
+  case clean_prefix == "" {
+    True -> NonStaticRequest
+    False ->
       case uri.percent_decode(clean_req) {
-        Error(_) -> True
-        Ok(decoded) ->
-          has_unsafe_path_pattern(clean_req) || has_unsafe_path_pattern(decoded)
+        Error(_) ->
+          case matches_static_segment(clean_req, clean_prefix) {
+            True -> UnsafeStaticRequest
+            False -> NonStaticRequest
+          }
+        Ok(decoded) -> {
+          let is_static =
+            matches_static_segment(clean_req, clean_prefix)
+            || matches_static_segment(decoded, clean_prefix)
+
+          case is_static {
+            False -> NonStaticRequest
+            True ->
+              case
+                has_unsafe_path_pattern(clean_req)
+                || has_unsafe_path_pattern(decoded)
+              {
+                True -> UnsafeStaticRequest
+                False -> ValidStaticRequest
+              }
+          }
+        }
       }
   }
+}
+
+fn matches_static_segment(path: String, prefix: String) -> Bool {
+  path == prefix || string.starts_with(path, prefix <> "/")
 }
 
 fn has_unsafe_path_pattern(path: String) -> Bool {
@@ -300,7 +331,7 @@ fn has_unsafe_path_pattern(path: String) -> Bool {
   || string.contains(path, "\\")
   || string.contains(path, "\u{0000}")
   || list.any(string.split(path, "/"), fn(segment) {
-    segment == "." || segment == ".."
+    string.starts_with(segment, ".")
   })
 }
 
@@ -315,7 +346,7 @@ fn add_security_headers(resp: wisp.Response) -> wisp.Response {
   resp
   |> response.set_header(
     "content-security-policy",
-    "default-src 'self'; img-src 'self' data:; style-src 'self'; font-src 'self'; script-src 'none'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+    "default-src 'self'; img-src 'self' data:; style-src 'self'; font-src 'self'; script-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
   )
   |> response.set_header("x-content-type-options", "nosniff")
   |> response.set_header("x-frame-options", "DENY")

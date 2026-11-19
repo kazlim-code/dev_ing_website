@@ -7,10 +7,12 @@ import dev_ing_website/router.{
   Blog, BlogPost, Home, NotFound, Projects, Prototypes, Resume,
 }
 import dev_ing_website/theme
+import filepath
 import gleam/http
 import gleam/http/response
 import gleam/list
 import gleam/string
+import simplifile
 import test_support
 import wisp/simulate
 
@@ -349,6 +351,59 @@ pub fn wisp_sets_security_headers_test() {
     == Ok("strict-origin-when-cross-origin")
   let assert Ok(csp) = response.get_header(res, "content-security-policy")
   assert string.contains(csp, "script-src 'none'")
+  assert string.contains(csp, "form-action 'none'")
+}
+
+/// Verifies dotfiles under `/static` (such as an existing `.DS_Store`) are blocked with 404.
+///
+pub fn wisp_blocks_static_dotfiles_test() {
+  let static_dir = "/tmp/dev_ing_website_stage3_static_dotfile_test"
+  let _ = simplifile.delete(static_dir)
+  let assert Ok(Nil) = simplifile.create_directory_all(static_dir)
+  let assert Ok(Nil) =
+    simplifile.write(
+      to: filepath.join(static_dir, ".DS_Store"),
+      contents: "secret",
+    )
+
+  let prod_ctx = context.prod_context(static_dir, "")
+  let res =
+    simulate.request(http.Get, "/static/.DS_Store")
+    |> router.handle_request(prod_ctx)
+
+  let _ = simplifile.delete(static_dir)
+  assert res.status == 404
+}
+
+/// Verifies percent-encoded dotfiles under `/static` are blocked with 404.
+///
+pub fn wisp_blocks_static_encoded_dotfiles_test() {
+  let prod_ctx = context.prod_context("priv/static", "")
+  let res =
+    simulate.request(http.Get, "/static/%2eDS_Store")
+    |> router.handle_request(prod_ctx)
+
+  assert res.status == 404
+}
+
+/// Verifies static prefix matching requires a `/` segment boundary (rejecting `/staticstyles.css`).
+///
+pub fn wisp_rejects_unseparated_static_prefix_collision_test() {
+  let prod_ctx = context.prod_context("priv/static", "")
+  let res =
+    simulate.request(http.Get, "/staticstyles.css")
+    |> router.handle_request(prod_ctx)
+
+  assert res.status == 404
+}
+
+/// Verifies rendered HTML documents include a `<meta http-equiv="Content-Security-Policy">` tag.
+///
+pub fn layout_includes_meta_csp_for_static_hosting_test() {
+  let prod_ctx = context.prod_context("priv/static", "")
+  let #(_status, html_doc) = router.render_route(prod_ctx, Home)
+
+  assert string.contains(html_doc, "http-equiv=\"Content-Security-Policy\"")
 }
 
 /// T21: Verifies `GET /` via `wisp/simulate` returns 200 and matches the Home page Birdie snapshot.
