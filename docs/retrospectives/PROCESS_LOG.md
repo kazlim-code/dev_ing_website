@@ -29,3 +29,7 @@ Tracks mid-workflow user corrections, friction points, and process improvements 
 6. **[2026-11-19] Render Phase 2 Spike Metrics in Chat Before Calling `ask_question`**:
    - **Observation**: Calling `ask_question` in the same tool batch immediately after receiving subagent spike results displays the question modal *before* the assistant's markdown text response renders, so the user sees the question without the spike metrics, charts, or snippets.
    - **Process Improvement**: Either present the full Phase 2 spike comparison (table, `xychart-beta`, architecture diagram, and code snippets) in the chat response first (or embed the summary directly in the prompt/artifact) before prompting for the decision gate.
+
+7. **[2026-11-19] Explain "What Problem the Spikes Solve & What the Framework Mechanism Does" in Phase 2 Reports**:
+   - **Observation**: Presenting raw spike metrics (`LOC`, `wisp/simulate` import counts) without first explaining in plain terms what problem the two spikes are solving and what `wisp/simulate` actually does under the hood left the architectural trade-off unclear until explained in a follow-up.
+   - **Process Improvement**: Every Phase 2 spike report and ADR must open with a short, plain-English **Conceptual Overview** explaining (1) the problem being solved, (2) how the underlying library/framework mechanism works, and (3) the concrete trade-off between Candidate A and Candidate B.

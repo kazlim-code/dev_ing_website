@@ -102,6 +102,36 @@ sequenceDiagram
 
 ## 4. Phase 2 Empirical Prototype Spike Comparison
 
+### Conceptual Overview: What Problem the Two Spikes Solved & What `wisp/simulate` Does
+
+In v1, `dev_ing_website` runs in **two execution modes** from the same codebase:
+1. **Live Wisp Server (`gleam run`)**: Serves pages dynamically over HTTP at `http://localhost:8000` (and on a live BEAM server in v2).
+2. **Static Exporter (`gleam run -m dev_ing_website/export`)**: Generates static `.html` files into `dist/` (`dist/index.html`, `dist/resume/index.html`, etc.) for zero-cost **GitHub Pages** hosting.
+
+The two spikes tested two different mechanisms for `export.gleam` to generate those static HTML files:
+
+- **What `wisp/simulate` Is**:
+  - Normally, a `wisp.Request` is created by the **Mist** web server when a browser opens a real TCP socket. Because `wisp.Request` wraps an opaque internal network connection type, you cannot construct one directly with `Request(...)`.
+  - **`wisp/simulate`** (called `wisp/testing` in Wisp v1) is Wisp's built-in **mock HTTP utility** for testing a Wisp server in memory without opening a network port:
+    - `simulate.request(http.Get, "/resume")` constructs a synthetic in-memory `wisp.Request` (using a dummy host `wisp.example.com` and a test secret key).
+    - Passing that request to `router.handle_request(req, ctx)` returns a `wisp.Response`.
+    - `simulate.read_body(response)` extracts the rendered HTML `String` from the response body.
+- **Candidate B ("Fake HTTP Loopback" via `wisp/simulate`)**:
+  - **How it works**: `export.gleam` imports `wisp/simulate` inside `src/`, pretends to be a browser sending synthetic `GET` requests (`"/resume"`, `"/projects"`, etc.) to `router.handle_request`, and writes `simulate.read_body(response)` to `dist/`.
+  - **Why it was considered**: The static export exercises the exact same HTTP entry point (`handle_request`), URL path-segment splitter, and Wisp middleware stack (`log_request`, `rescue_crashes`) as a live browser request.
+  - **Downsides uncovered in the spike**:
+    1. Pulls a test-oriented helper (`wisp/simulate`) into production `src/` code.
+    2. Stringly-typed: `export.gleam` must iterate over raw URL strings and manually check `response.status == 200` (or `404` for `404.html`).
+    3. Every exported page triggers Wisp's console request logger and crash-rescue middleware (which could silently write a `500 Internal Server Error` page into `dist/` if a view panicked).
+- **Candidate A ("Shared Pure Function" via `render_route`)**:
+  - **How it works**: Separates **HTML generation** from **HTTP transport**:
+    - `render_route(ctx, Resume)` is a pure Gleam function taking a typed `Route` variant (`Home`, `Projects`, `Blog`, `Resume`, etc.) and returning `#(200, "<!doctype html>...")`.
+    - **Wisp (`handle_request`)** parses the URL into a `Route`, calls `render_route`, and wraps the string in `wisp.html_response`.
+    - **Static Exporter (`export.gleam`)** loops over a typed `List(Route)` and calls `render_route` directly—zero fake HTTP requests needed.
+  - **Where `wisp/simulate` lives in Candidate A**: Strictly inside `test/dev_ing_website_test.gleam` to test HTTP routing, headers, and middleware.
+
+*(See also: [docs/learnings/wisp-simulate-and-hybrid-static-export.md](file:///Users/callum/Documents/GitHub/dev_ing_website/docs/learnings/wisp-simulate-and-hybrid-static-export.md))*
+
 Two isolated Jujutsu worktrees (`scratch/spike_a` and `scratch/spike_b`) prototyped the full core slice (`context`, `bento`, `layout`, `router`, `export`, and `dev_ing_website_test`) and executed `gleam test`:
 
 ### Side-by-Side Spike Metrics
