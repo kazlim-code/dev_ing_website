@@ -1,0 +1,36 @@
+---
+version: 2.0.2
+title: generic_bento_card_black_and_orange
+file: ./test/dev_ing_website/components/bento_test.gleam
+test_name: bento_card_black_and_orange_snapshot_test
+---
+<article class="bento-card rounded-2xl border p-6 flex flex-col gap-4 bento-half md:col-span-1 bg-zinc-900 border-orange-500/40 text-zinc-50">
+  <p class="font-mono text-orange-500 bento-eyebrow">
+    FEATURED // COMPONENT
+  </p>
+  <h2 class="bento-card-title text-xl font-bold tracking-tight">
+    Reusable Bento Primitive
+  </h2>
+  <div class="bento-card-body flex flex-col gap-3">
+    <p>
+      Theme-parameterized Lustre card tested in isolation with Birdie.
+    </p>
+    <ul class="flex flex-wrap gap-2 list-none p-0 m-0" role="list">
+      <li>
+        <span class="badge inline-flex items-center rounded-full px-3 py-1 text-xs font-mono bg-orange-500 text-zinc-950 font-semibold">
+          Gleam
+        </span>
+      </li>
+      <li>
+        <span class="badge inline-flex items-center rounded-full px-3 py-1 text-xs font-mono bg-orange-500 text-zinc-950 font-semibold">
+          Wisp
+        </span>
+      </li>
+      <li>
+        <span class="badge inline-flex items-center rounded-full px-3 py-1 text-xs font-mono bg-orange-500 text-zinc-950 font-semibold">
+          Lustre
+        </span>
+      </li>
+    </ul>
+  </div>
+</article>
