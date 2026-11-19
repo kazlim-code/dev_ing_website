@@ -34,6 +34,14 @@ Tracks mid-workflow user corrections, friction points, and process improvements 
    - **Observation**: The initial Phase 3 TDD matrix bundled multiple routes, flag states (`OFF` and `ON`), and Birdie snapshots into composite test functions (`T04`, `T05`, `T07`–`T09`).
    - **Process Improvement**: Design every test in the Phase 3 TDD Specification Matrix to test **one behavior or assertion target at a time** (separate `_flag_off_test` vs. `_flag_on_test`, one route or snapshot per test), only bundling assertions when fixture setup cost (such as a full filesystem export) justifies sharing setup.
 
-7. **[2026-11-19] Explain "What Problem the Spikes Solve & What the Framework Mechanism Does" in Phase 2 Reports**:
+8. **[2026-11-19] Explain "What Problem the Spikes Solve & What the Framework Mechanism Does" in Phase 2 Reports**:
    - **Observation**: Presenting raw spike metrics (`LOC`, `wisp/simulate` import counts) without first explaining in plain terms what problem the two spikes are solving and what `wisp/simulate` actually does under the hood left the architectural trade-off unclear until explained in a follow-up.
    - **Process Improvement**: Every Phase 2 spike report and ADR must open with a short, plain-English **Conceptual Overview** explaining (1) the problem being solved, (2) how the underlying library/framework mechanism works, and (3) the concrete trade-off between Candidate A and Candidate B.
+
+9. **[2026-11-19] Gleam `simplifile` & Wisp Static Serving Symlink / Trailing-Slash Pitfalls**:
+   - **Observation**: Stage 1B & Stage 3 cross-family audits revealed that `wisp.serve_static` uses `simplifile.file_info` (following symlinks) and plain prefix matching, `simplifile.copy_directory` ignores per-file errors inside `list.each`, and POSIX `lstat` (`simplifile.link_info`) dereferences a symlink if a trailing `/` is present (`"dist/"`).
+   - **Process Improvement**: Always pair `wisp.serve_static` with segment-boundary matching, dotfile filtering, and a `link_info` walk across root and every segment; strip trailing `/` before `simplifile.link_info`, guard recursion depth + `simplifile.resolve` nesting, and avoid `simplifile.copy_directory`.
+
+10. **[2026-11-19] Cross-Family Security Alternation + `file` Inspection of Imported Binary Assets**:
+    - **Observation**: Alternating Stage 3 security passes across model families (`Claude Opus 5.5` ↔ `Gemini 4 Neon XHigh`) uncovered 4 subtle POSIX symlink/nesting vulnerabilities after Pass #1 had 0 high/medium issues, and running `file` during Stage 4 caught legacy EXIF `GPS-Data` in `priv/static/me.jpg` plus a corrupt 404 HTML page masquerading as `JetBrainsMono-Regular.woff2`.
+    - **Process Improvement**: Keep alternating model families until a fresh pass returns `findings: []`, and always run `file` / metadata checks on imported static images and fonts during Phase 1 or Stage 4 audits.

@@ -28,7 +28,7 @@ The legacy `dev_ing` website ([kazlim-code/dev-ing](https://github.com/kazlim-co
 
 ### Slice C — Theme Tokens, Generic Component Architecture & Feature Flags
 - **Theme-Parameterized Generic Components (`theme.gleam` + `components/`)**: Rather than relying on the early external `glelements` POC repository, UI primitives (`bento.gleam`, cards, badges, section headers) must be architected in-repo as generic, reusable functions that accept explicit typed theme and variant options (`Theme`, `CardTone`, `BentoSpan`, `BadgeVariant`). This guarantees every component can be unit- and Birdie-snapshot tested in isolation and makes prototyping fun, expressive design systems in v2 (`F2.1`) and a standout interactive Living Resume (`F2.3`) seamless.
-- **Black & Orange Default Palette**: `priv/static/glelements.css` maps `--color-primary` to `orange-500` (`#f97316`) and `--color-surface-900`/`950` to `zinc-900` (`#18181b`) / `zinc-950` (`#09090b`), paired with `JetBrainsMono-Regular.woff2`.
+- **Black & Orange Default Palette**: `priv/static/glelements.css` retains the legacy reference color tokens (`--color-primary` mapped to `orange-500` `#f97316` and `--color-surface-900`/`950` mapped to `zinc-900` `#18181b` / `zinc-950` `#09090b`), while self-hosted `priv/static/styles.css` serves the runtime Black & Orange Bento stylesheet without external CDN `<script>` tags.
 - **Feature Flags in `Context`**: `FeatureFlags(enable_prototypes_route: Bool, enable_unpublished_posts: Bool, enable_resume_filters: Bool)` defaults to `False` in production static exports (`prod_defaults()`) and `True` in local development (`dev_defaults()`).
 
 ---
@@ -214,3 +214,12 @@ We chose **Candidate A — Shared Pure View Renderer (`render_route`)** combined
   - `T06`–`T10`: Pure data integrity (`B1.1` typo fix, privacy check omitting street address/phone, `B1.2` project slugs, `B1.3` draft post exclusion when `Flag = OFF` and inclusion when `Flag = ON`).
   - `T11`–`T19`: Route parsing, `/about` -> `Resume` alias, `/prototypes` `Flag = OFF` (`NotFound`) vs `Flag = ON` (`Prototypes`), draft blog post `render_route` `Flag = OFF` (`404`) vs `Flag = ON` (`200`), Living Resume filter bar `Flag = OFF` vs `Flag = ON` (`data-resume-filter-bar`), and `context.href` base-path prefixing.
   - `T20`–`T24`: Wisp `POST /` `405` rejection, Birdie page snapshots via `wisp/simulate` (`/`, `/projects`, `/resume`), and static exporter directory tree verification (`export.export_site`).
+
+---
+
+## 7. Verification & Audit Artifacts
+
+- **Test & Snapshot Suite (`gleam test`)**: `74 / 74` atomic tests passing (`4` accepted Birdie snapshots in `test/birdie_snapshots/`), including full coverage of `Flag = OFF` / `Flag = ON` paths, `layout`, `data`, `router` HTTP simulation (`wisp/simulate`), `export_site`, and `dev_ing_website.context_for_env`.
+- **Stage 2 Blind Peer Review (`Claude Sonnet 5.5 High`)**: Verified 0 blockers and 0 feature-gating leaks across navbar, Home, Blog, Router, Living Resume, and Exporter; expanded coverage from 24 to 60 tests.
+- **Stage 3 Cross-Family Security Loop (`Claude Opus 5.5 High` Passes #1 & #3 ↔ `Gemini 4 Neon XHigh` Pass #2)**: Hardened `DEV_ING_ENV` production defaults, CSP HTTP header + static HTML `<meta>` policy, `context.href` control-character/backslash sanitization, symlink-free segment-by-segment `simplifile.link_info` verification, dotfile rejection, and exporter self-nesting/trailing-slash protections. Pass #3 verified `findings: []` (`74 / 74` tests passing).
+- **Stage 4 Read-Only Efficiency Audit**: Recorded in [EFFICIENCY-0001: Wisp + Lustre Bento Architecture Efficiency Audit](../audits/EFFICIENCY-0001-wisp-lustre-bento-architecture.md) with deferred optimization triggers and legacy binary asset findings synced to [`ROADMAP.md`](../../ROADMAP.md).

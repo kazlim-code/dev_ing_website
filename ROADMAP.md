@@ -6,18 +6,18 @@ This roadmap tracks upcoming features, queued bug fixes, and AI architectural su
 
 ## 1. Upcoming Features
 
-### Version 1.0 — Core Multi-Page Foundation & Static Export (Active Target)
-- [ ] **F1.1 — Wisp + Lustre SSR Core Pipeline (`context`, `router`, `layout`)**:
-  - Idiomatic Wisp middleware pipeline, typed `Route` parser (`/`, `/projects`, `/blog`, `/blog/:slug`, `/resume`, `/prototypes`), and shared HTML5 document shell.
-- [ ] **F1.2 — Generic, Theme-Parameterized UI Component Architecture (`theme`, `components/`)**:
-  - Architect reusable, generic UI components (`bento`, `card`, `badge`, `nav`, `section`) that accept explicit typed theming options and visual variants (`Theme`, `CardTone`, `BentoSpan`, `Variant`) so components are decoupled from page data, easy to compose, and individually covered by unit & Birdie snapshot tests.
-  - Ship v1 with a clean, minimal **Black & Orange Bento Grid** default theme (`#09090b` `zinc-950` canvas, `#18181b` `zinc-900` cards, `#f97316` `orange-500` primary accents, and `JetBrains Mono` metadata).
-- [ ] **F1.3 — Typed Content Modules & Living Resume (`data/project`, `data/blog`, `data/resume`)**:
-  - Pure Gleam data modules for Personal & Work projects (`Dev.Ing`, `Wyrd Technology`, `Grafa`, plus `Glelements` documented as an early Lustre UI POC), blog posts (`what-is-dev-ing`, `what-is-jj`), and a dedicated **Living Resume** page (`/resume` with `/about` alias).
-- [ ] **F1.4 — Hybrid GitHub Pages Static Multi-Page Exporter (`export`)**:
-  - CLI command (`gleam run -m dev_ing_website/export`) that renders all routes to static HTML files (`dist/index.html`, `dist/projects/index.html`, `dist/blog/index.html`, `dist/blog/<slug>/index.html`, `dist/resume/index.html`, `dist/404.html`) and copies `priv/static/` assets for zero-cost GitHub Pages deployment.
-- [ ] **F1.5 — Feature Gating & Dark-Launch Config (`Context` Flag Accessors)**:
-  - Typed feature flags in `Context` (`enable_prototypes_route`, `enable_unpublished_posts`, `enable_resume_filters`) accessed through pure query helpers (`context.prototypes_enabled(ctx)`, etc.) and defaulting to `False` in production static exports. Using accessor functions decouples views/routers from the storage mechanism so v2 can swap in runtime OTP/DB lookups without touching route or view code.
+### Version 1.0 — Core Multi-Page Foundation & Static Export (Completed — See [ADR-0001](docs/decisions/ADR-0001-multi-page-wisp-lustre-bento-architecture.md))
+- [x] **F1.1 — Wisp + Lustre SSR Core Pipeline (`context`, `router`, `layout`)**:
+  - Idiomatic Wisp middleware pipeline, typed `Route` parser (`/`, `/projects`, `/blog`, `/blog/:slug`, `/resume`, `/prototypes`), security headers + CSP, and shared HTML5 document shell ([ADR-0001](docs/decisions/ADR-0001-multi-page-wisp-lustre-bento-architecture.md)).
+- [x] **F1.2 — Generic, Theme-Parameterized UI Component Architecture (`theme`, `components/`)**:
+  - Reusable, generic UI components (`bento.grid`, `bento.card`, `bento.card_with_heading`, `bento.badge`, `bento.section_header`, `bento.tech_badges`) parameterized by typed `Theme`, `CardTone`, `BentoSpan`, and `BadgeTone` options and isolated unit + Birdie snapshot tests.
+  - Shipped v1 with self-hosted **Black & Orange Bento Grid** styling (`priv/static/styles.css`, `#09090b` canvas, `#18181b` cards, `#f97316` orange accents).
+- [x] **F1.3 — Typed Content Modules & Living Resume (`data/project`, `data/blog`, `data/resume`)**:
+  - Pure Gleam data modules for Personal & Work projects (`Dev.Ing`, `Glelements`, `Wyrd Technology`, `Grafa`), blog posts (`what-is-dev-ing`, `what-is-jj`, plus gated draft `bento-design-systems-in-gleam`), and a dedicated **Living Resume** page (`/resume` with `/about` alias).
+- [x] **F1.4 — Hybrid GitHub Pages Static Multi-Page Exporter (`export`)**:
+  - CLI command (`gleam run -m dev_ing_website/export`) rendering all enabled routes (`dist/index.html`, `dist/projects/index.html`, `dist/blog/index.html`, `dist/blog/<slug>/index.html`, `dist/resume/index.html`, `dist/about/index.html`, `dist/404.html`, `.nojekyll`) and strictly copying non-dotfile, symlink-free `priv/static/` assets.
+- [x] **F1.5 — Feature Gating & Dark-Launch Config (`Context` Flag Accessors)**:
+  - Typed feature flags in `Context` (`enable_prototypes_route`, `enable_unpublished_posts`, `enable_resume_filters`) accessed through pure query helpers (`context.prototypes_enabled(ctx)`, etc.), defaulting safely to `False` in production exports and live server runs unless `DEV_ING_ENV=dev`.
 
 ### Version 2.0 — Design System Prototyping, Fun Interactive Resume & Live BEAM Hosting (Upcoming)
 - [ ] **F2.1 — Fun & Cool Design System Prototyping (Fleshing Out the Look & Feel)**:
@@ -35,10 +35,16 @@ This roadmap tracks upcoming features, queued bug fixes, and AI architectural su
 
 ## 2. Queued Bug Fixes & Legacy Cleanups (Porting from `kazlim-code/dev-ing`)
 
-- [ ] **B1.1 — Fix Legacy Bio Typo**: Correct `"such  s Git"` to `"such as Git"` from legacy `data/about.gleam`.
-- [ ] **B1.2 — Decouple `Project` Data Type from Lustre `Attribute(a)`**: Remove the phantom `a` type parameter from `Project` so project data records are 100% pure data without view attributes embedded in the model.
-- [ ] **B1.3 — Enable & Gate `what-is-jj` Blog Post Cleanly**: The Jujutsu blog post (`what-is-jj`) was commented out in legacy `data/blog.gleam`; model `published: Bool` on `BlogPost` so drafts/published posts are controlled cleanly via data + feature flags rather than commented-out code.
-- [ ] **B1.4 — Eliminate GitHub Pages SPA 404 Routing Hack**: Replace client-side `modem` SPA routing with real multi-page `<route>/index.html` directories generated by `export.gleam`.
+- [x] **B1.1 — Fix Legacy Bio Typo**: Corrected `"such  s Git"` to `"such as Git"` in `src/dev_ing_website/data/resume.gleam` ([ADR-0001](docs/decisions/ADR-0001-multi-page-wisp-lustre-bento-architecture.md)).
+- [x] **B1.2 — Decouple `Project` Data Type from Lustre `Attribute(a)`**: Removed the phantom `a` type parameter so `Project` records are 100% pure data in `src/dev_ing_website/data/project.gleam`.
+- [x] **B1.3 — Enable & Gate `what-is-jj` Blog Post Cleanly**: Published `what-is-jj` and modeled `published: Bool` on `BlogPost` gated by `enable_unpublished_posts` in `src/dev_ing_website/data/blog.gleam`.
+- [x] **B1.4 — Eliminate GitHub Pages SPA 404 Routing Hack**: Replaced client-side `modem` SPA routing with real `<route>/index.html` directories generated by `src/dev_ing_website/export.gleam`.
+- [ ] **B1.5 — Strip EXIF `GPS-Data` & Resize Hero Portrait (`priv/static/me.jpg`)** *(from [EFFICIENCY-0001](docs/audits/EFFICIENCY-0001-wisp-lustre-bento-architecture.md) `E1`)*:
+  - Legacy `priv/static/me.jpg` (`256K`, `2944×2208`) retains Samsung `GPS-Data` EXIF metadata despite rendering at `88×88 px`. Strip EXIF metadata and resize to `176×176` (`~5–8 KB` WebP/JPEG).
+- [ ] **B1.6 — Fix Corrupt `JetBrainsMono-Regular.woff2` Font Asset** *(from [EFFICIENCY-0001](docs/audits/EFFICIENCY-0001-wisp-lustre-bento-architecture.md) `E2`)*:
+  - Legacy `priv/static/fonts/JetBrainsMono-Regular.woff2` contains a Google 404 HTML page instead of a valid `.woff2` binary, wasting a preloaded font request on every page. Replace with a valid Latin-subset `.woff2` file or remove the broken preload/`@font-face`.
+- [ ] **B1.7 — Generalize `T07` Private Contact Assertions (`resume_test.gleam`)** *(from Stage 2 `blind-rev` `m11`)*:
+  - Replace hardcoded legacy street/phone substring checks in `resume_omits_private_contact_details_test` with pattern checks (no digits-only phone numbers or street suffixes) so real string fragments are not persisted in tests.
 
 ---
 
@@ -46,9 +52,19 @@ This roadmap tracks upcoming features, queued bug fixes, and AI architectural su
 
 - **S3.1 — Theme-Parameterized Generic Component Testing Matrix (Trigger: Every new component in `src/dev_ing_website/components/`)**:
   - Rather than maintaining an external `glelements` package, keep generic UI components in `src/dev_ing_website/components/` parameterized by a `Theme` / `Variant` record so feeding in new theming options in v2 can be snapshot-tested across variants in isolation.
-- **S3.2 — Retire Static Export Flag When Live BEAM Host Is Active (Trigger: Completion of F2.2)**:
+- **S3.2 — Retire Static Export Flag When Live BEAM Host Is Active (Trigger: Completion of `F2.2`)**:
   - Once `dev_ing_website` runs on a live BEAM host in v2.2, transition GitHub Pages to a redirect or retire `export.gleam`.
 - **S3.3 — Retire `feature.prototypes_route.enabled` Gate (Trigger: After v2.1 visual design sign-off)**:
-  - Keep `/prototypes` gated behind `Context.features.enable_prototypes` (ON in dev, OFF in prod export) until v2.1 visual experiments conclude.
-- **S3.4 — Retire Legacy Copy Typo Test (T06) (Trigger: First v1/v2 content copy rewrite)**:
+  - Keep `/prototypes` gated behind `Context.features.enable_prototypes_route` (ON in dev via `DEV_ING_ENV=dev`, OFF in prod) until v2.1 visual experiments conclude.
+- **S3.4 — Retire Legacy Copy Typo Test (`T06`) (Trigger: First v1/v2 content copy rewrite)**:
   - `resume_summary_fixes_legacy_git_typo_test` (`test/dev_ing_website/data/resume_test.gleam`) is a one-time migration guard for `B1.1`; remove it once resume copy diverges from the legacy `dev-ing` text.
+- **S3.5 — Prune & Optimize Unreferenced `priv/static/` Payload (`EFFICIENCY-0001` `E3`) (Trigger: Already tripped `>100 KB`; address alongside `B1.5`/`B1.6` or v2.1 asset cleanup)**:
+  - Remove or move unused `under-construction.png` (`1.0M`), `glelements.css`, and 28 unreferenced icons (`~700 KB`), or drive `copy_directory_strict` from a static asset manifest and resize icons to `<= 96 px`.
+- **S3.6 — Add `Cache-Control` & Compression Middleware for Live BEAM Hosting (`EFFICIENCY-0001` `E4`) (Trigger: `F2.2` BEAM deploy or `>50 req/s`)**:
+  - Serve `Cache-Control: public, max-age=300, must-revalidate` for HTML, `max-age=86400` (or `immutable` with content-hashed filenames) for static assets, and precompressed `.br`/`.gz` responses.
+- **S3.7 — Startup Symlink-Free Static Asset Manifest (`EFFICIENCY-0001` `E5`) (Trigger: Sustained `>500 static req/s` or `>50 page views/s`)**:
+  - Pre-validate the static directory tree into `persistent_term`/ETS at startup in production mode so per-request static checks avoid `3+` repeated `link_info` syscalls per asset.
+- **S3.8 — Single-Pass Slash Strip & Precomputed `static_prefix` (`EFFICIENCY-0001` `E6`) (Trigger: Request paths `>1,000` chars at `>20 req/s`)**:
+  - Replace recursive `strip_leading_slashes` with single-pass prefix scanning and compute `static_prefix` once at startup.
+- **S3.9 — Exporter & SSR Scaling Optimizations (`EFFICIENCY-0001` `E7`–`E11`) (Trigger: `>100` blog posts, `>5` posts on Home, `>2,000` files in static dir, or `>50 page req/s`)**:
+  - Pre-sort `all_posts()`, cap Home at `list.take(posts, 3)`, switch `copy_directory_strict` accumulation to prepend + `list.reverse`, deduplicate `/resume` vs `/about` renders, stream `to_document_string_tree` via `wisp.string_tree_body`, and memoize prod HTML per `Route` in `persistent_term`.

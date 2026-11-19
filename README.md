@@ -26,11 +26,11 @@
 
 ## Roadmap
 
-### Version 1 (Current Target — Structure, Themeable Components & Static Export)
-- [ ] Ground-up multi-page architecture in Gleam (`v1.18.1`), Wisp (`v2.2.2`), and Lustre (`v5.7.1`).
-- [ ] Generic, reusable, **theme-parameterized UI component architecture** (`src/dev_ing_website/theme.gleam` & `src/dev_ing_website/components/`) shipped with a clean, minimal **Black & Orange Bento Grid** default theme and isolated component tests.
-- [ ] Core routes (`/`, `/projects`, `/blog`, `/blog/:slug`, `/resume` Living Resume) tested with `wisp/simulate` and `birdie` snapshots.
-- [ ] Static multi-page HTML exporter (`gleam run -m dev_ing_website/export`) for zero-cost **GitHub Pages** hosting alongside local Wisp server support.
+### Version 1 (Completed — Structure, Themeable Components & Static Export)
+- [x] Ground-up multi-page architecture in Gleam (`v1.18.1`), Wisp (`v2.2.2`), and Lustre (`v5.7.1`).
+- [x] Generic, reusable, **theme-parameterized UI component architecture** (`src/dev_ing_website/theme.gleam` & `src/dev_ing_website/components/`) shipped with a self-hosted **Black & Orange Bento Grid** default theme and isolated component tests.
+- [x] Core routes (`/`, `/projects`, `/blog`, `/blog/:slug`, `/resume` Living Resume) tested with `wisp/simulate` and `birdie` snapshots (`74` tests passing).
+- [x] Static multi-page HTML exporter (`gleam run -m dev_ing_website/export`) for zero-cost **GitHub Pages** hosting alongside local Wisp server support.
 
 ### Version 2 (Upcoming Work — Fun Design Systems, Interactive Resume & Live Hosting)
 - [ ] **v2.1 — Fun & Cool Design System Prototyping**: Prototype and compare expressive visual design systems to flesh out the look of the site, leveraging the v1 theme-parameterized component architecture (superseding the early `glelements` POC).
@@ -49,8 +49,11 @@ gleam test
 # Review and accept/reject Birdie snapshots interactively
 gleam run -m birdie
 
-# Run the Wisp development server
-gleam run
+# Run the Wisp development server (defaults to prod flags; set DEV_ING_ENV=dev for prototypes & drafts)
+DEV_ING_ENV=dev gleam run
+
+# Export static multi-page HTML into dist/ for GitHub Pages (optional DEV_ING_BASE_PATH, defaults to /dev_ing)
+gleam run -m dev_ing_website/export
 
 # Format Gleam source files
 gleam format
