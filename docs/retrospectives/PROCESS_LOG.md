@@ -4,44 +4,30 @@ Tracks mid-workflow user corrections, friction points, and process improvements 
 
 ---
 
-## Pending Process Retrospective Items
+## 1. Pending Process Retrospective Items
+
+*None pending.*
+
+---
+
+## 2. Promoted & Handed Off Process Evolutions
+
+- **[Item 9] Gleam `simplifile` & Wisp Static Serving Symlink / Trailing-Slash Pitfalls** → **Promoted to [`AGENTS.md`](../../AGENTS.md) (Rule 7)** (`chore(process)`):
+  - Enforced segment-boundary static prefix matching, dotfile blocking, trailing-slash stripping before `simplifile.link_info`, segment-by-segment symlink rejection, `copy_directory_strict`, `simplifile.resolve` nesting guards, and `file` asset verification.
+- **[Items 2, 4, 5, 6, 7, 8, 10] Cross-Project Agentic Planning, TDD & Blind Audit Improvements** → **Approved for Promotion via `antigravity` Handoff Prompt**:
+  - **Item 2 (`[2026-11-18]`)**: Capture deferred scope (`v1` vs `v2`) directly into `ROADMAP.md` during Socratic scoping (`architect-plan`).
+  - **Item 4 (`[2026-11-18]`)**: Slice installed package/dependency sources (e.g., `build/packages/<pkg>/src/` for Wisp v2 `wisp/simulate`) during Phase 1 before authoring test specifications (`architect-plan`).
+  - **Item 5 (`[2026-11-18]`)**: Create isolated worktrees via `jj workspace add <path> --name spike_<name>` instead of `Workspace: "share"` in `JJ_Git` repositories (`architect-plan`).
+  - **Item 6 (`[2026-11-19]`)**: Present Phase 2 spike metrics/diagrams in chat before calling `ask_question` (or keep modal prompts self-contained) (`architect-plan`).
+  - **Item 7 (`[2026-11-19]`)**: Enforce atomic, single-responsibility unit tests (`_flag_off_test` vs `_flag_on_test`, one assertion target per test) in Phase 3 TDD matrices & Stage 1 (`architect-plan`, `tdd-and-blind-audit`).
+  - **Item 8 (`[2026-11-19]`)**: Open every Phase 2 spike report & ADR with a plain-English **Conceptual Overview** explaining the problem solved and underlying framework mechanism (`architect-plan`).
+  - **Item 10 (`[2026-11-19]`)**: Commit per stage (`Stage 1B` / `Stage 2` / `Stage 3`), keep alternating cross-family security passes until `findings: []`, and run `file`/metadata checks on imported binary assets during Stage 4 (`tdd-and-blind-audit`).
+
+---
+
+## 3. Archived One-Off / Project-Specific Notes
 
 1. **[2026-11-11] Voice STT Disambiguation for Gleam Ecosystem Terms & GitHub Handles**:
-   - **Observation**: Voice transcription misheard Gleam's `"Lustre"` framework as `"Lustre.js"` and GitHub handle `"kazlim-code/dev-ing"` as `"chasm-code/dev_ing"`.
-   - **Process Improvement**: Always treat `"Lustre"` in a Gleam workspace as the pure Gleam Hex package (`lustre`), never a JS library; when a spoken GitHub repo returns 404, immediately check `gh repo list` to resolve phonetic spelling and hyphen vs. underscore naming (`dev-ing` vs `dev_ing`).
-
-2. **[2026-11-18] Capturing Deferred Scope into `ROADMAP.md` (v1 vs. v2)**:
-   - **Observation**: During Socratic scoping questions (`ask_question`), the user shared both immediate v1 priorities (clean structure, basic Black & Orange Bento theme, Living Resume page, static GitHub Pages compatibility) and future v2 ambitions (visual polish, live BEAM hosting, dynamic features).
-   - **Process Improvement**: Every time an option is deferred during Socratic scoping ("for v1 let's do X, eventually in v2 I want Y"), automatically record the deferred items in `ROADMAP.md` under upcoming version milestones in the same turn.
-
+   - Voice transcription misheard Gleam's `"Lustre"` as `"Lustre.js"` and `"kazlim-code/dev-ing"` as `"chasm-code/dev_ing"`. Already codified in [`AGENTS.md`](../../AGENTS.md) Rule 1; archived as project-specific.
 3. **[2026-11-18] Checking `/Users/callum/Documents/antigravity/.agents/skills/` for Newly Created Skills**:
-   - **Observation**: Custom skills may live in `/Users/callum/Documents/antigravity/.agents/skills/` in addition to `~/.gemini/antigravity/scratch/antigravity-skills/skills/`.
-   - **Process Improvement**: When a user references a newly created skill, verify `<skills>` in the prompt context and check `/Users/callum/Documents/antigravity/.agents/skills/<skill-name>/SKILL.md`.
-
-4. **[2026-11-18] Wisp v2 API Change (`wisp/testing` -> `wisp/simulate`)**:
-   - **Observation**: Phase 1 repo slicing (`Slice B` & `Slice C`) discovered that `wisp v2.2.2` replaced the v1 `wisp/testing` module with `wisp/simulate` (`simulate.request`, `simulate.read_body`).
-   - **Process Improvement**: Always slice installed package sources in `build/packages/<pkg>/src/` during Phase 1 before writing test specifications so deprecated v1 module names never enter test plans.
-
-5. **[2026-11-18] Isolated Subagent Worktrees in `JJ_Git` Repositories (`jj workspace add`)**:
-   - **Observation**: Calling `invoke_subagent` with `Workspace: "share"` fails in Git-colocated Jujutsu repositories (`share workspace not supported for VCS type JJ_Git`).
-   - **Process Improvement**: In `JJ_Git` repos, create isolated shared Jujutsu worktrees in `<appDataDir>/brain/<conversation-id>/scratch/spike_<name>` using `jj workspace add <path> --name spike_<name>`, run the parallel subagent spikes inside those directories, and clean them up afterwards with `jj workspace forget spike_<name>` and `rm -rf`.
-
-6. **[2026-11-19] Render Phase 2 Spike Metrics in Chat Before Calling `ask_question`**:
-   - **Observation**: Calling `ask_question` in the same tool batch immediately after receiving subagent spike results displays the question modal *before* the assistant's markdown text response renders, so the user sees the question without the spike metrics, charts, or snippets.
-   - **Process Improvement**: Either present the full Phase 2 spike comparison (table, `xychart-beta`, architecture diagram, and code snippets) in the chat response first (or embed the summary directly in the prompt/artifact) before prompting for the decision gate.
-
-7. **[2026-11-19] Atomic, Single-Responsibility Unit Tests in TDD Matrix**:
-   - **Observation**: The initial Phase 3 TDD matrix bundled multiple routes, flag states (`OFF` and `ON`), and Birdie snapshots into composite test functions (`T04`, `T05`, `T07`–`T09`).
-   - **Process Improvement**: Design every test in the Phase 3 TDD Specification Matrix to test **one behavior or assertion target at a time** (separate `_flag_off_test` vs. `_flag_on_test`, one route or snapshot per test), only bundling assertions when fixture setup cost (such as a full filesystem export) justifies sharing setup.
-
-8. **[2026-11-19] Explain "What Problem the Spikes Solve & What the Framework Mechanism Does" in Phase 2 Reports**:
-   - **Observation**: Presenting raw spike metrics (`LOC`, `wisp/simulate` import counts) without first explaining in plain terms what problem the two spikes are solving and what `wisp/simulate` actually does under the hood left the architectural trade-off unclear until explained in a follow-up.
-   - **Process Improvement**: Every Phase 2 spike report and ADR must open with a short, plain-English **Conceptual Overview** explaining (1) the problem being solved, (2) how the underlying library/framework mechanism works, and (3) the concrete trade-off between Candidate A and Candidate B.
-
-9. **[2026-11-19] Gleam `simplifile` & Wisp Static Serving Symlink / Trailing-Slash Pitfalls**:
-   - **Observation**: Stage 1B & Stage 3 cross-family audits revealed that `wisp.serve_static` uses `simplifile.file_info` (following symlinks) and plain prefix matching, `simplifile.copy_directory` ignores per-file errors inside `list.each`, and POSIX `lstat` (`simplifile.link_info`) dereferences a symlink if a trailing `/` is present (`"dist/"`).
-   - **Process Improvement**: Always pair `wisp.serve_static` with segment-boundary matching, dotfile filtering, and a `link_info` walk across root and every segment; strip trailing `/` before `simplifile.link_info`, guard recursion depth + `simplifile.resolve` nesting, and avoid `simplifile.copy_directory`.
-
-10. **[2026-11-19] Cross-Family Security Alternation + `file` Inspection of Imported Binary Assets**:
-    - **Observation**: Alternating Stage 3 security passes across model families (`Claude Opus 5.5` ↔ `Gemini 4 Neon XHigh`) uncovered 4 subtle POSIX symlink/nesting vulnerabilities after Pass #1 had 0 high/medium issues, and running `file` during Stage 4 caught legacy EXIF `GPS-Data` in `priv/static/me.jpg` plus a corrupt 404 HTML page masquerading as `JetBrainsMono-Regular.woff2`.
-    - **Process Improvement**: Keep alternating model families until a fresh pass returns `findings: []`, and always run `file` / metadata checks on imported static images and fonts during Phase 1 or Stage 4 audits.
+   - Session-specific path discovery note (prompt `<skills>` already lists exact active paths); archived as one-off note.

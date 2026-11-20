@@ -49,3 +49,9 @@
    - Document every public function before its definition using `///` comments, ending with a blank `///` line.
    - Keep `README.md`, `AGENTS.md`, and `CHANGELOG.md` (following [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/)) synchronized with architectural changes.
    - Always verify with `gleam test` and `gleam format --check` before considering a task complete.
+
+7. **Wisp Static Serving, `simplifile` & Security Invariants:**
+   - **Safe Runtime Defaults:** Keep `src/dev_ing_website.gleam` defaulting to `context.prod_context` (feature flags OFF) unless `DEV_ING_ENV=dev` (or `development`) is explicitly set; apply HTTP security headers (`Content-Security-Policy`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`) outside `wisp.rescue_crashes` and mirror CSP via `<meta http-equiv="Content-Security-Policy">` for static exports.
+   - **Static Serving & Symlink Protection:** Never pass untrusted request paths straight to `wisp.serve_static` alone (it uses plain prefix matching and `simplifile.file_info`, which follows symlinks). Require `/` segment boundaries, block dotfiles (any segment starting with `.`), and walk `ctx.static_directory` plus every decoded segment with `simplifile.link_info` (after stripping trailing `/` to prevent POSIX `lstat` symlink dereferencing).
+   - **Static Export Hygiene:** Avoid `simplifile.copy_directory` (which swallows per-file errors and fails with `Eexist` on existing subdirectories). Use strict `simplifile.link_info` traversal skipping dotfiles, rejecting symlinks (`Eloop`), bounding recursion depth, verifying `output_dir` is empty/non-symlink, and guarding against `output_dir` nested inside `static_directory` via `simplifile.resolve`.
+   - **Binary Asset Verification:** Run `file` and size checks on newly imported static images/fonts under `priv/static/` to catch EXIF/GPS metadata leaks, oversized LCP assets, or corrupt/HTML font stubs.
