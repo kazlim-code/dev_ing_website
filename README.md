@@ -20,16 +20,16 @@
 
 - `/` — **Home**: Clean Black & Orange Bento Grid showcase of work, projects, and latest learnings
 - `/projects` — **Projects & Work**: Personal projects (`Dev.Ing`, `Glelements`) and professional work (`Wyrd Technology`, `Grafa`)
-- `/blog` & `/blog/:slug` — **Blog**: Technical articles & learning journal (*What is Dev_Ing*, *Experimenting with VCS other than Git (Jujutsu)*)
-- `/resume` — **Living Resume**: Dedicated living engineering resume covering Callum Ingley's career history, frameworks, tooling, and featured work
-- `/prototypes` — **Design Prototypes**: Multi-page layout experimentation in the black & orange theme
+- `/blog` & `/blog/:slug` — **Blog**: Technical articles & learning journal — published posts (`what-is-dev-ing`, `what-is-jj`) and dev-only draft posts (`bento-design-systems-in-gleam`)
+- `/resume` (alias `/about`) — **Living Resume**: Dedicated living engineering resume covering Callum Ingley's career history, frameworks, tooling, and featured work
+- `/prototypes` — **Design Prototypes** *(dev only)*: Multi-page layout experimentation in the black & orange theme (`DEV_ING_ENV=dev`; returns `404` in production mode)
 
 ## Roadmap
 
 ### Version 1 (Completed — Structure, Themeable Components & Static Export)
 - [x] Ground-up multi-page architecture in Gleam (`v1.18.1`), Wisp (`v2.2.2`), and Lustre (`v5.7.1`).
 - [x] Generic, reusable, **theme-parameterized UI component architecture** (`src/dev_ing_website/theme.gleam` & `src/dev_ing_website/components/`) shipped with a self-hosted **Black & Orange Bento Grid** default theme and isolated component tests.
-- [x] Core routes (`/`, `/projects`, `/blog`, `/blog/:slug`, `/resume` Living Resume) tested with `wisp/simulate` and `birdie` snapshots (`74` tests passing).
+- [x] Core routes (`/`, `/projects`, `/blog`, `/blog/:slug`, `/resume` Living Resume) tested with `wisp/simulate` and `birdie` snapshots (`75` tests passing, including `4` Birdie snapshots).
 - [x] Static multi-page HTML exporter (`gleam run -m dev_ing_website/export`) for zero-cost **GitHub Pages** hosting alongside local Wisp server support.
 
 ### Version 2 (Upcoming Work — Fun Design Systems, Interactive Resume & Live Hosting)
@@ -38,25 +38,80 @@
 - [ ] **v2.3 — Standout, Fun & Interactive Living Resume (`/resume`)**: Make interactivity central on `/resume`—clear, functional, and genuinely fun to explore (interactive skill/stack filtering, interactive timeline/case-study views, and print/PDF mode).
 - [ ] **v2.4 — Dynamic Blog CMS & OTP Features**: Introduce dynamic content management, tag/search filtering, and optional database persistence or OTP actor services on the live BEAM server.
 
-## Development, Testing & Version Control (`jj`)
+## Running Locally
+
+### 1. Live Wisp + Mist Server (`http://localhost:8000`)
+
+The live HTTP server (`src/dev_ing_website.gleam`) listens on **`http://localhost:8000`** (`mist.port(8000)`).
+
+- **Production-parity mode (default):**
+
+  ```sh
+  gleam run
+  ```
+
+  `DEV_ING_ENV` defaults to `"prod"` (`context.prod_context`), keeping all experimental feature flags **OFF**. Production routes work normally, while `/prototypes` and unpublished draft posts return **`404`**.
+
+- **Development mode (feature flags ON):**
+
+  ```sh
+  DEV_ING_ENV=dev gleam run
+  ```
+
+  Setting `DEV_ING_ENV=dev` (or `DEV_ING_ENV=development`) switches to `context.dev_context`, enabling `enable_prototypes_route` and `enable_unpublished_posts` (`enable_resume_filters` remains `False` for v2). This unlocks `/prototypes` and draft posts such as `/blog/bento-design-systems-in-gleam`.
+
+#### Active Local Routes
+
+| Route | Mode | Description |
+| :--- | :--- | :--- |
+| `/` | Always enabled | Home (Black & Orange Bento Grid) |
+| `/projects` | Always enabled | Personal & commercial projects |
+| `/blog` | Always enabled | Blog post index |
+| `/blog/what-is-dev-ing` | Always enabled | Published post: *What is Dev_Ing?* |
+| `/blog/what-is-jj` | Always enabled | Published post: *Experimenting with VCS other than Git (Jujutsu)* |
+| `/resume` (or `/about`) | Always enabled | Living Resume |
+| `/prototypes` | Dev only (`DEV_ING_ENV=dev`) | Design system switcher (`404` in prod mode) |
+| `/blog/bento-design-systems-in-gleam` | Dev only (`DEV_ING_ENV=dev`) | Draft post: *Bento Design Systems in Gleam & Lustre* (`404` in prod mode) |
+
+### 2. Previewing the Static GitHub Pages Export (`dist/`) Locally
+
+`gleam run -m dev_ing_website/export` always exports with production feature flags **OFF** (`context.prod_context`) and cleans/rewrites `dist/` (which is gitignored). By default, `DEV_ING_BASE_PATH` defaults to `"/dev_ing"` for GitHub Pages project hosting, so all generated stylesheets, images, and internal links are prefixed with `/dev_ing/...`. Serving that default `dist/` directory at `/` locally causes **`404`** responses for CSS, static assets, and links.
+
+- **Local root preview (serve `dist/` at `http://localhost:8080/`):**
+
+  ```sh
+  DEV_ING_BASE_PATH="" gleam run -m dev_ing_website/export
+  python3 -m http.server 8080 --directory dist
+  ```
+
+  Then open **`http://localhost:8080/`** in your browser.
+
+- **Subpath build check (GitHub Pages project path):**
+
+  ```sh
+  # Default GitHub Pages subpath (/dev_ing)
+  gleam run -m dev_ing_website/export
+
+  # Or override for another repository subpath
+  DEV_ING_BASE_PATH="/<repo-name>" gleam run -m dev_ing_website/export
+  ```
+
+## Local Verification & Version Control (`jj`)
 
 This project follows **Test-Driven Development (TDD)** and uses **Jujutsu (`jj`)** with regular atomic commits/revisions:
 
 ```sh
-# Run unit, route, and Birdie snapshot tests
+# Run all unit, route, security, export, and Birdie snapshot checks (75 tests + 4 snapshots)
 gleam test
 
-# Review and accept/reject Birdie snapshots interactively
-gleam run -m birdie
+# Verify Gleam code formatting without modifying files
+gleam format --check
 
-# Run the Wisp development server (defaults to prod flags; set DEV_ING_ENV=dev for prototypes & drafts)
-DEV_ING_ENV=dev gleam run
-
-# Export static multi-page HTML into dist/ for GitHub Pages (optional DEV_ING_BASE_PATH, defaults to /dev_ing)
-gleam run -m dev_ing_website/export
-
-# Format Gleam source files
+# Format Gleam source and test files
 gleam format
+
+# Interactively review and accept/reject Birdie snapshots
+gleam run -m birdie
 
 # Check Jujutsu status & revision log
 jj status

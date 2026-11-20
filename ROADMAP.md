@@ -1,6 +1,6 @@
 # ROADMAP.md — `dev_ing_website`
 
-This roadmap tracks upcoming features, queued bug fixes, priority efficiency & asset actions, and architectural suggestions for Callum Ingley's multi-page Gleam + Wisp + Lustre portfolio and engineering blog (`dev_ing`).
+This roadmap tracks upcoming features, queued bug fixes, priority efficiency & asset actions, architectural suggestions, and documentation/developer experience (DX) items for Callum Ingley's multi-page Gleam + Wisp + Lustre portfolio and engineering blog (`dev_ing`).
 
 ---
 
@@ -82,3 +82,12 @@ Action items and trigger-gated optimizations sourced from [EFFICIENCY-0001](docs
   - Keep `/prototypes` gated behind `Context.features.enable_prototypes_route` (ON in dev via `DEV_ING_ENV=dev`, OFF in prod) until v2.1 visual experiments conclude.
 - **S3.4 — Retire Legacy Copy Typo Test (`T06`) (Trigger: First v1/v2 content copy rewrite)**:
   - `resume_summary_fixes_legacy_git_typo_test` (`test/dev_ing_website/data/resume_test.gleam`) is a one-time migration guard for `B1.1`; remove it once resume copy diverges from the legacy `dev-ing` text.
+
+---
+
+## 5. Documentation & Developer Experience (DX)
+
+- [x] **D1.1 — Comprehensive Local Development, Static Preview & Verification Guide (`README.md`)**:
+  - **Live Wisp + Mist Server (`http://localhost:8000`)**: Document production-parity mode (`gleam run`, feature flags OFF where `/prototypes` and draft posts return `404`), development mode (`DEV_ING_ENV=dev gleam run` / `DEV_ING_ENV=development`, unlocking `/prototypes` and draft posts such as `bento-design-systems-in-gleam`), and all active routes (`/`, `/projects`, `/blog`, `/blog/what-is-dev-ing`, `/blog/what-is-jj`, `/resume` & `/about`, plus dev-only `/prototypes`).
+  - **Static GitHub Pages Export (`dist/`) Local Preview**: Document why default `gleam run -m dev_ing_website/export` uses `DEV_ING_BASE_PATH="/dev_ing"` (which causes 404s if served at `/` locally), local root preview (`DEV_ING_BASE_PATH="" gleam run -m dev_ing_website/export` + `python3 -m http.server 8080 --directory dist`), and subpath build check (`DEV_ING_BASE_PATH="/<repo-name>" gleam run -m dev_ing_website/export`).
+  - **Local Verification Commands**: Document `gleam test` (`75` tests + `4` Birdie snapshots), `gleam format --check`, and `gleam run -m birdie`.

@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implemented Candidate A pure renderer + Wisp router (`router.gleam`), Mist server entrypoint (`dev_ing_website.gleam`), and static GitHub Pages exporter (`export.gleam`).
 - Added `74` atomic tests and `4` accepted Birdie snapshots across mirrored `test/dev_ing_website/` modules (`wisp/simulate`, feature-gate dual-path tests, symlink/traversal regression tests, and exporter integration tests).
 - Documented Stage 4 read-only efficiency findings and deferred triggers in [EFFICIENCY-0001](docs/audits/EFFICIENCY-0001-wisp-lustre-bento-architecture.md).
+- Documented comprehensive local development, static export preview (`DEV_ING_BASE_PATH`), active routes, prod-vs-dev feature-flag modes, and local verification workflows in `README.md` and tracked `D1.1` in `ROADMAP.md`.
 
 ### Fixed
 - **B1.5 (`EFFICIENCY-0001` `E1`)**: Stripped EXIF `GPS-Data` metadata and resized `priv/static/me.jpg` from `256K` (`2944×2208`) to `176×176` (`4.8K` JPEG) for the hero portrait.
