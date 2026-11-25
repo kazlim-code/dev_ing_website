@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    uses: kazlim-code/ci-workflows/.github/workflows/gleam-ci.yml@v1.0.0
+    with:
+      otp_version: "28.0"
+      gleam_version: "1.18.1"
+      run_format_check: true
