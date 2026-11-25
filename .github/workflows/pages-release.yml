@@ -23,7 +23,7 @@ jobs:
       id-token: write
     with:
       otp_version: "28.0"
-      gleam_version: "1.18.1"
+      gleam_version: "1.19.2"
       export_module: "dev_ing_website/export"
       base_path_env: "DEV_ING_BASE_PATH"
       output_dir: "dist"
