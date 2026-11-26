@@ -18,8 +18,9 @@ concurrency:
 
 jobs:
   verify:
-    uses: kazlim-code/ci-workflows/.github/workflows/gleam-ci.yml@v1.0.0
+    uses: kazlim-code/ci-workflows/.github/workflows/gleam-ci.yml@v1.0.1
     with:
       otp_version: "28.0"
       gleam_version: "1.19.2"
+      rebar3_version: "3.28.0"
       run_format_check: true

@@ -16,7 +16,7 @@ concurrency:
 jobs:
   deploy-pages:
     if: startsWith(github.ref, 'refs/tags/v')
-    uses: kazlim-code/ci-workflows/.github/workflows/gleam-pages-deploy.yml@v1.0.0
+    uses: kazlim-code/ci-workflows/.github/workflows/gleam-pages-deploy.yml@v1.0.1
     permissions:
       contents: read
       pages: write
@@ -24,6 +24,7 @@ jobs:
     with:
       otp_version: "28.0"
       gleam_version: "1.19.2"
+      rebar3_version: "3.28.0"
       export_module: "dev_ing_website/export"
       base_path_env: "DEV_ING_BASE_PATH"
       output_dir: "dist"
